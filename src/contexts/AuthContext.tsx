@@ -214,7 +214,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, onUserLogi
       localStorage.setItem('electra-user', JSON.stringify(updatedUser));
       
       toast.success("Profile updated successfully!");
-      return updatedUser;
     } catch (error) {
       let errorMessage = "An unexpected error occurred";
       

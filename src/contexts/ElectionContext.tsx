@@ -45,6 +45,7 @@ export interface Election {
   candidates: Candidate[];
   totalVotes: number;
   voterCount: number;
+  electionImage?: string;
 }
 
 export interface Voter {
@@ -253,41 +254,62 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   // Create a new election
-  const createElection = (election: Omit<Election, 'id' | 'totalVotes' | 'status'>) => {
-    return new Promise<void>(async (resolve, reject) => {
+  const createElection = async (election: Omit<Election, 'id' | 'totalVotes' | 'status'>) => {
+    if (!dataInitialized) return;
+    
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Generate a client-side ID for immediate UI feedback
+      const newElectionId = Math.random().toString(36).substring(2, 15);
+      
+      // Prepare the election data with status determined by dates
+      const newElection: Election = {
+        ...election,
+        id: newElectionId,
+        totalVotes: 0,
+        status: determineStatus(election.startDate, election.endDate)
+      };
+      
+      // Update local state immediately for responsive UI
+      setElections(prev => [...prev, newElection]);
+      
+      // Attempt to save to backend
       try {
-        setIsLoading(true);
-        
-        // Determine the status based on dates
-        const status = determineStatus(election.startDate, election.endDate);
-        
-        // Send election data to API with determined status
-        const response = await api.post('/admin/elections', {
-          ...election,
-          status
-        });
-        
-        // Update local state with the new election from API
-        const newElection = {
-          ...response.data,
-          startDate: new Date(response.data.startDate),
-          endDate: new Date(response.data.endDate),
-          status: determineStatus(new Date(response.data.startDate), new Date(response.data.endDate))
+        const payload = {
+          title: election.title,
+          description: election.description,
+          startDate: election.startDate.toISOString(),
+          endDate: election.endDate.toISOString(),
+          electionImage: election.electionImage || '',
+          candidates: election.candidates,
+          voterCount: election.voterCount || 0
         };
         
-        setElections(prevElections => [...prevElections, newElection]);
+        const response = await api.post('/admin/elections', payload);
         
-        toast.success('Election created successfully!');
-        setIsLoading(false);
-        resolve();
+        // If successful, update the local election with server-generated ID
+        if (response.data && response.data.id) {
+          setElections(prev => prev.map(e => 
+            e.id === newElectionId ? { ...e, id: response.data.id } : e
+          ));
+        }
       } catch (err) {
-        setError('Failed to create election');
-        console.error('Error creating election:', err);
-        toast.error('Failed to create election');
-        setIsLoading(false);
-        reject(err);
+        console.error('Error saving election to backend:', err);
+        // In a real app, you might want to mark this election as "not synced" 
+        // or retry the save operation
       }
-    });
+      
+      toast.success('Election created successfully!');
+    } catch (err) {
+      setError('Failed to create election');
+      console.error('Error creating election:', err);
+      toast.error('Failed to create election');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Delete an election

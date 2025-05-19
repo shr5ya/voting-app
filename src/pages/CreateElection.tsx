@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { CalendarPlus, PlusCircle, Trash2, UserCircle, BriefcaseBusiness, FileText, Image } from 'lucide-react';
+import { CalendarPlus, PlusCircle, Trash2, UserCircle, BriefcaseBusiness, FileText, Image, Upload } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useElection } from '@/contexts/ElectionContext';
@@ -11,10 +11,13 @@ import { useNavigate } from 'react-router-dom';
 const CreateElection = () => {
   const navigate = useNavigate();
   const { createElection } = useElection();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [electionImage, setElectionImage] = useState('');
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [candidates, setCandidates] = useState([
     { name: '', position: '', bio: '', imageUrl: '' }
@@ -38,6 +41,25 @@ const CreateElection = () => {
       return;
     }
     setCandidates(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleImageClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        setPreviewImage(result);
+        setElectionImage(result);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const validateForm = () => {
@@ -79,6 +101,7 @@ const CreateElection = () => {
         description: description.trim(),
         startDate: new Date(startDate),
         endDate: new Date(endDate),
+        electionImage: electionImage,
         candidates: candidates.map(c => ({
           ...c,
           name: c.name.trim(),
@@ -102,6 +125,8 @@ const CreateElection = () => {
       setDescription('');
       setStartDate('');
       setEndDate('');
+      setElectionImage('');
+      setPreviewImage(null);
       setCandidates([{ name: '', position: '', bio: '', imageUrl: '' }]);
     } catch (error) {
       toast.error('Failed to create election. Please try again.');
@@ -150,6 +175,52 @@ const CreateElection = () => {
                       onChange={e => setDescription(e.target.value)} 
                       className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                     />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Election Image</label>
+                    <div 
+                      onClick={handleImageClick}
+                      className="cursor-pointer border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 flex flex-col items-center justify-center gap-2 hover:border-blue-500 dark:hover:border-blue-400 transition-colors"
+                    >
+                      {previewImage ? (
+                        <div className="relative w-full">
+                          <img 
+                            src={previewImage} 
+                            alt="Election banner" 
+                            className="w-full h-40 object-cover rounded-lg"
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            className="absolute top-2 right-2"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPreviewImage(null);
+                              setElectionImage('');
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <Upload className="h-10 w-10 text-gray-400" />
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Click to upload election banner image</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500">
+                            Recommended size: 1200x300px
+                          </p>
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        className="hidden"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                      />
+                    </div>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

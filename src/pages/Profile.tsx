@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { User, Mail, Calendar, Award, BookOpen, Edit, Save, X } from 'lucide-react';
+import { User, Mail, Calendar, Award, BookOpen, Edit, Save, X, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { GlassContainer } from '@/components/ui/glass-components';
 import { useAuth } from '@/contexts/AuthContext';
@@ -30,30 +30,32 @@ const itemVariants = {
 };
 
 const Profile: React.FC = () => {
-  // In a real app we'd use the user from context
-  const userInfo = {
-    name: "Shreya",
-    email: "shreya@electra.com",
-    role: "Administrator",
-    joinDate: "Jan 15, 2023",
-    avatar: "/shreya-profile.jpg", // Will fallback to initials if image not found
+  const { user, updateProfile } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Mock data for elections and votes stats (would come from API in real app)
+  const mockStats = {
     elections: 12,
     votesCreated: 1254
   };
   
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    name: userInfo.name,
-    email: userInfo.email
+    name: user?.name || '',
+    email: user?.email || '',
+    profileImage: user?.profileImage || ''
   });
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const handleEditToggle = () => {
     if (isEditing) {
       // Discard changes
       setFormData({
-        name: userInfo.name,
-        email: userInfo.email
+        name: user?.name || '',
+        email: user?.email || '',
+        profileImage: user?.profileImage || ''
       });
+      setPreviewImage(null);
     }
     setIsEditing(!isEditing);
   };
@@ -63,10 +65,35 @@ const Profile: React.FC = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSave = () => {
-    // Would send data to backend in a real app
-    toast.success("Profile updated successfully!");
-    setIsEditing(false);
+  const handleImageClick = () => {
+    if (isEditing && fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        setPreviewImage(result);
+        setFormData(prev => ({ ...prev, profileImage: result }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      await updateProfile({
+        name: formData.name,
+        profileImage: previewImage || formData.profileImage
+      });
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+    }
   };
   
   return (
@@ -89,10 +116,30 @@ const Profile: React.FC = () => {
         <motion.div variants={itemVariants}>
           <Card className="glass-card lg:col-span-1 hover:shadow-lg transition-all duration-300">
             <CardHeader className="flex flex-col items-center gap-4 pb-2">
-              <Avatar className="h-24 w-24 ring-2 ring-primary/20 hover:scale-105 transition-transform duration-300">
-                <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=Shreya&backgroundColor=ffdfbf" alt={userInfo.name} />
-                <AvatarFallback><User className="w-10 h-10" /></AvatarFallback>
-              </Avatar>
+              <div 
+                onClick={handleImageClick} 
+                className={`relative ${isEditing ? 'cursor-pointer' : ''}`}
+              >
+                <Avatar className="h-24 w-24 ring-2 ring-primary/20 hover:scale-105 transition-transform duration-300">
+                  <AvatarImage 
+                    src={previewImage || user?.profileImage || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || 'User'}&backgroundColor=ffdfbf`} 
+                    alt={user?.name || 'User'} 
+                  />
+                  <AvatarFallback><User className="w-10 h-10" /></AvatarFallback>
+                </Avatar>
+                {isEditing && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-full opacity-0 hover:opacity-100 transition-opacity">
+                    <Upload className="w-8 h-8 text-white" />
+                  </div>
+                )}
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  className="hidden" 
+                  accept="image/*"
+                  onChange={handleImageChange}
+                />
+              </div>
               <div className="text-center">
                 {isEditing ? (
                   <div className="space-y-2">
@@ -106,9 +153,9 @@ const Profile: React.FC = () => {
                     />
                   </div>
                 ) : (
-                  <CardTitle className="text-2xl font-bold">{userInfo.name}</CardTitle>
+                  <CardTitle className="text-2xl font-bold">{user?.name}</CardTitle>
                 )}
-                <CardDescription className="text-muted-foreground">{userInfo.role}</CardDescription>
+                <CardDescription className="text-muted-foreground">{user?.role === 'admin' ? 'Administrator' : 'Voter'}</CardDescription>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -120,17 +167,19 @@ const Profile: React.FC = () => {
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
+                    disabled
                   />
+                  <p className="text-xs text-muted-foreground">Email cannot be changed</p>
                 </div>
               ) : (
                 <>
                   <div className="flex items-center gap-2">
                     <Mail className="h-4 w-4 text-primary" />
-                    <span className="text-sm text-muted-foreground">{userInfo.email}</span>
+                    <span className="text-sm text-muted-foreground">{user?.email}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-primary" />
-                    <span className="text-sm text-muted-foreground">Joined {userInfo.joinDate}</span>
+                    <span className="text-sm text-muted-foreground">Joined Jan 15, 2023</span>
                   </div>
                 </>
               )}
@@ -185,7 +234,7 @@ const Profile: React.FC = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-3xl font-bold animate-count-up">{userInfo.elections}</p>
+                    <p className="text-3xl font-bold animate-count-up">{mockStats.elections}</p>
                     <p className="text-muted-foreground">Elections managed</p>
                   </CardContent>
                 </Card>
@@ -203,7 +252,7 @@ const Profile: React.FC = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-3xl font-bold animate-count-up">{userInfo.votesCreated}</p>
+                    <p className="text-3xl font-bold animate-count-up">{mockStats.votesCreated}</p>
                     <p className="text-muted-foreground">Total votes created</p>
                   </CardContent>
                 </Card>
