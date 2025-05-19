@@ -2,13 +2,6 @@ import { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { UserRole } from '../../types/user';
 
-const router = Router();
-
-// JWT secret - should be in environment variables in production
-const JWT_SECRET = process.env.JWT_SECRET || 'electra-secret-key';
-const TOKEN_EXPIRY = '24h';
-
-// In-memory store for registered users (would be a database in production)
 interface RegisteredUser {
   id: string;
   name: string;
@@ -18,11 +11,20 @@ interface RegisteredUser {
   createdAt: Date;
   updatedAt: Date;
   isActive: boolean;
-  registrationVerified?: boolean;
   voterId?: string;
+  registrationVerified?: boolean;
 }
 
-const registeredUsers: RegisteredUser[] = [
+const router = Router();
+
+// Secret key for JWT signing - in production, use environment variables
+const JWT_SECRET = process.env.JWT_SECRET || 'electra-secret-key';
+const TOKEN_EXPIRY = '24h';
+
+// Store registered users in memory for demo
+// In a real app, this would be a database
+// Need to make this persist between server restarts for the demo
+let registeredUsers: RegisteredUser[] = [
   {
     id: 'admin-user-id',
     name: 'Admin User',
@@ -45,6 +47,53 @@ const registeredUsers: RegisteredUser[] = [
     voterId: 'V12345'
   }
 ];
+
+// Save registered users to the file system
+const fs = require('fs');
+const path = require('path');
+const usersFilePath = path.join(__dirname, '../../../data/users.json');
+
+// Ensure data directory exists
+const dataDir = path.join(__dirname, '../../../data');
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
+
+// Load registered users from file if it exists
+try {
+  if (fs.existsSync(usersFilePath)) {
+    const userData = fs.readFileSync(usersFilePath, 'utf8');
+    const parsedUsers = JSON.parse(userData);
+    
+    // Convert string dates back to Date objects
+    parsedUsers.forEach((user: any) => {
+      user.createdAt = new Date(user.createdAt);
+      user.updatedAt = new Date(user.updatedAt);
+    });
+    
+    // Merge with default users, keeping existing users
+    const existingEmails = new Set(parsedUsers.map((u: RegisteredUser) => u.email));
+    const defaultUsers = registeredUsers.filter(u => !existingEmails.has(u.email));
+    registeredUsers = [...parsedUsers, ...defaultUsers];
+    
+    console.log(`Loaded ${registeredUsers.length} users from storage`);
+  } else {
+    // Save initial users
+    saveUsers();
+    console.log('Created initial users file');
+  }
+} catch (error) {
+  console.error('Error loading users:', error);
+}
+
+// Function to save users to file
+function saveUsers() {
+  try {
+    fs.writeFileSync(usersFilePath, JSON.stringify(registeredUsers, null, 2));
+  } catch (error) {
+    console.error('Error saving users:', error);
+  }
+}
 
 /**
  * @route   POST /api/auth/login
@@ -120,6 +169,9 @@ router.post('/register', (req: Request, res: Response) => {
     
     // Add to our in-memory store
     registeredUsers.push(newUser);
+    
+    // Save updated users to file
+    saveUsers();
     
     // Create a user response object without the password
     const { password: _, ...userResponse } = newUser;

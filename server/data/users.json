@@ -1,0 +1,34 @@
+[
+  {
+    "id": "admin-user-id",
+    "name": "Admin User",
+    "email": "admin@example.com",
+    "password": "admin123",
+    "role": "admin",
+    "createdAt": "2025-05-19T20:11:02.536Z",
+    "updatedAt": "2025-05-19T20:11:02.536Z",
+    "isActive": true
+  },
+  {
+    "id": "voter-user-id",
+    "name": "John Voter",
+    "email": "voter@example.com",
+    "password": "voter123",
+    "role": "voter",
+    "createdAt": "2025-05-19T20:11:02.536Z",
+    "updatedAt": "2025-05-19T20:11:02.536Z",
+    "isActive": true,
+    "voterId": "V12345"
+  },
+  {
+    "id": "user-g7zjrs1",
+    "name": "Kanav Kumar",
+    "email": "kumarkanav5753@gmail.com",
+    "password": "08092004kk",
+    "role": "voter",
+    "createdAt": "2025-05-19T20:12:38.466Z",
+    "updatedAt": "2025-05-19T20:12:38.466Z",
+    "isActive": true,
+    "registrationVerified": false
+  }
+]
