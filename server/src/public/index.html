@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voting API Tester</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        h2 {
+            color: #3498db;
+            margin-top: 30px;
+        }
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        input {
+            padding: 8px;
+            margin: 5px 0 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .result {
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 15px;
+            min-height: 100px;
+            white-space: pre-wrap;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: 1px solid #ddd;
+            background-color: #f8f9fa;
+        }
+        .tab.active {
+            background-color: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h1>Electra Voting API Tester</h1>
+    <p>Use this page to visually test the backend API and demonstrate that it's working correctly.</p>
+
+    <div class="tabs">
+        <div class="tab active" onclick="openTab(event, 'info')">API Info</div>
+        <div class="tab" onclick="openTab(event, 'auth')">Authentication</div>
+        <div class="tab" onclick="openTab(event, 'voter')">Voter</div>
+        <div class="tab" onclick="openTab(event, 'admin')">Admin</div>
+    </div>
+
+    <div id="info" class="tab-content active">
+        <div class="card">
+            <h2>API Information</h2>
+            <button onclick="fetchApiInfo()">Get API Info</button>
+            <div id="api-info-result" class="result"></div>
+        </div>
+        
+        <div class="card">
+            <h2>Health Check</h2>
+            <button onclick="checkHealth()">Check API Health</button>
+            <div id="health-result" class="result"></div>
+        </div>
+    </div>
+
+    <div id="auth" class="tab-content">
+        <div class="card">
+            <h2>Admin Login</h2>
+            <form id="admin-login-form">
+                <label for="admin-email">Email:</label>
+                <input type="email" id="admin-email" value="admin@example.com">
+                
+                <label for="admin-password">Password:</label>
+                <input type="password" id="admin-password" value="admin123">
+                
+                <button type="button" onclick="adminLogin()">Login as Admin</button>
+            </form>
+            <div id="admin-login-result" class="result"></div>
+        </div>
+        
+        <div class="card">
+            <h2>Voter Login</h2>
+            <form id="voter-login-form">
+                <label for="voter-email">Email:</label>
+                <input type="email" id="voter-email" value="voter@example.com">
+                
+                <label for="voter-password">Password:</label>
+                <input type="password" id="voter-password" value="voter123">
+                
+                <button type="button" onclick="voterLogin()">Login as Voter</button>
+            </form>
+            <div id="voter-login-result" class="result"></div>
+        </div>
+        
+        <div class="card">
+            <h2>Voter ID Login</h2>
+            <form id="voter-id-login-form">
+                <label for="voter-id">Voter ID:</label>
+                <input type="text" id="voter-id" value="V12345">
+                
+                <label for="access-code">Access Code:</label>
+                <input type="text" id="access-code" value="123456">
+                
+                <button type="button" onclick="voterIdLogin()">Login with Voter ID</button>
+            </form>
+            <div id="voter-id-login-result" class="result"></div>
+        </div>
+        
+        <div class="card">
+            <h2>Register New User</h2>
+            <form id="register-form">
+                <label for="register-name">Name:</label>
+                <input type="text" id="register-name" value="New User">
+                
+                <label for="register-email">Email:</label>
+                <input type="email" id="register-email" value="newuser@example.com">
+                
+                <label for="register-password">Password:</label>
+                <input type="password" id="register-password" value="password123">
+                
+                <button type="button" onclick="registerUser()">Register</button>
+            </form>
+            <div id="register-result" class="result"></div>
+        </div>
+    </div>
+
+    <div id="voter" class="tab-content">
+        <div class="card">
+            <h2>List Elections</h2>
+            <button onclick="fetchElections()">Get Elections</button>
+            <div id="elections-result" class="result"></div>
+        </div>
+    </div>
+
+    <div id="admin" class="tab-content">
+        <div class="card">
+            <h2>Admin Dashboard</h2>
+            <p>To access admin endpoints, you must first login as an admin using the Authentication tab.</p>
+            <button onclick="fetchAdminElections()">Get Admin Elections</button>
+            <div id="admin-elections-result" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        // Store auth token
+        let authToken = '';
+
+        function openTab(evt, tabName) {
+            // Hide all tab content
+            const tabContents = document.getElementsByClassName("tab-content");
+            for (let i = 0; i < tabContents.length; i++) {
+                tabContents[i].classList.remove("active");
+            }
+            
+            // Remove active class from all tabs
+            const tabs = document.getElementsByClassName("tab");
+            for (let i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove("active");
+            }
+            
+            // Show the selected tab content and mark the tab as active
+            document.getElementById(tabName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+        }
+
+        function displayResult(elementId, data) {
+            const resultElement = document.getElementById(elementId);
+            if (typeof data === 'object') {
+                resultElement.textContent = JSON.stringify(data, null, 2);
+            } else {
+                resultElement.textContent = data;
+            }
+        }
+
+        function fetchApiInfo() {
+            fetch('http://localhost:5002/api/v1')
+                .then(response => response.json())
+                .then(data => {
+                    displayResult('api-info-result', data);
+                })
+                .catch(error => {
+                    displayResult('api-info-result', `Error: ${error.message}`);
+                });
+        }
+
+        function checkHealth() {
+            fetch('http://localhost:5002/api/v1/healthcheck')
+                .then(response => response.json())
+                .then(data => {
+                    displayResult('health-result', data);
+                })
+                .catch(error => {
+                    displayResult('health-result', `Error: ${error.message}`);
+                });
+        }
+
+        function adminLogin() {
+            const email = document.getElementById('admin-email').value;
+            const password = document.getElementById('admin-password').value;
+            
+            fetch('http://localhost:5002/api/v1/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.token) {
+                        authToken = data.token;
+                    }
+                    displayResult('admin-login-result', data);
+                })
+                .catch(error => {
+                    displayResult('admin-login-result', `Error: ${error.message}`);
+                });
+        }
+
+        function voterLogin() {
+            const email = document.getElementById('voter-email').value;
+            const password = document.getElementById('voter-password').value;
+            
+            fetch('http://localhost:5002/api/v1/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.token) {
+                        authToken = data.token;
+                    }
+                    displayResult('voter-login-result', data);
+                })
+                .catch(error => {
+                    displayResult('voter-login-result', `Error: ${error.message}`);
+                });
+        }
+
+        function voterIdLogin() {
+            const voterId = document.getElementById('voter-id').value;
+            const accessCode = document.getElementById('access-code').value;
+            
+            fetch('http://localhost:5002/api/v1/auth/voter/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ voterId, accessCode })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.token) {
+                        authToken = data.token;
+                    }
+                    displayResult('voter-id-login-result', data);
+                })
+                .catch(error => {
+                    displayResult('voter-id-login-result', `Error: ${error.message}`);
+                });
+        }
+
+        function registerUser() {
+            const name = document.getElementById('register-name').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            
+            fetch('http://localhost:5002/api/v1/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name, email, password })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    displayResult('register-result', data);
+                })
+                .catch(error => {
+                    displayResult('register-result', `Error: ${error.message}`);
+                });
+        }
+
+        function fetchElections() {
+            if (!authToken) {
+                displayResult('elections-result', "Please login first to get your auth token");
+                return;
+            }
+            
+            fetch('http://localhost:5002/api/v1/voter/elections', {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    displayResult('elections-result', data);
+                })
+                .catch(error => {
+                    displayResult('elections-result', `Error: ${error.message}`);
+                });
+        }
+
+        function fetchAdminElections() {
+            if (!authToken) {
+                displayResult('admin-elections-result', "Please login as admin first to get your auth token");
+                return;
+            }
+            
+            fetch('http://localhost:5002/api/v1/admin/elections', {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    displayResult('admin-elections-result', data);
+                })
+                .catch(error => {
+                    displayResult('admin-elections-result', `Error: ${error.message}`);
+                });
+        }
+
+        // Initialize by loading API info
+        window.onload = function() {
+            fetchApiInfo();
+            checkHealth();
+        };
+    </script>
+</body>
+</html> 

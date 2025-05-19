@@ -163,7 +163,7 @@ router.post('/voter/login', (req: Request, res: Response) => {
  */
 router.get('/verify/:token', (req: Request, res: Response) => {
   try {
-    const { token } = req.params;
+    const { token: _token } = req.params;
 
     // In a real implementation, verify the token and update user status in database
     
@@ -208,7 +208,7 @@ router.post('/forgot-password', (req: Request, res: Response) => {
  */
 router.post('/reset-password/:token', (req: Request, res: Response) => {
   try {
-    const { token } = req.params;
+    const { token: _token } = req.params;
     const { password } = req.body;
 
     // Validate request

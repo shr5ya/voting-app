@@ -1,4 +1,4 @@
-import { Router, Request, Response, NextFunction } from 'express';
+import { Router } from 'express';
 import adminElectionsRouter from './admin/elections';
 import adminUsersRouter from './admin/users';
 import adminCandidatesRouter from './admin/candidates';
@@ -6,7 +6,6 @@ import adminStatsRouter from './admin/stats';
 import adminConfigRouter from './admin/config';
 import voterElectionsRouter from './voter/elections';
 import authRouter from './auth';
-import profileRouter from './profile';
 
 // Initialize the main router
 const router = Router();
@@ -16,9 +15,6 @@ const API_VERSION = 'v1';
 
 // Auth routes
 router.use(`/${API_VERSION}/auth`, authRouter);
-
-// Profile routes
-router.use(`/${API_VERSION}/profile`, profileRouter);
 
 // Admin routes
 router.use(`/${API_VERSION}/admin/elections`, adminElectionsRouter);
@@ -30,16 +26,7 @@ router.use(`/${API_VERSION}/admin/config`, adminConfigRouter);
 // Voter routes
 router.use(`/${API_VERSION}/voter/elections`, voterElectionsRouter);
 
-// Public API routes
-router.get(`/${API_VERSION}/healthcheck`, (_req, res) => {
-  res.status(200).json({ 
-    status: 'ok',
-    version: process.env.npm_package_version || '1.0.0',
-    timestamp: new Date().toISOString() 
-  });
-});
-
-// API Documentation
+// API Documentation route
 router.get(`/${API_VERSION}`, (_req, res) => {
   res.status(200).json({
     message: 'Electra Voting API',
@@ -47,7 +34,6 @@ router.get(`/${API_VERSION}`, (_req, res) => {
     documentation: '/api/v1/docs',
     endpoints: [
       { path: '/api/v1/auth', description: 'Authentication endpoints' },
-      { path: '/api/v1/profile', description: 'User profile endpoints' },
       { path: '/api/v1/admin', description: 'Admin endpoints' },
       { path: '/api/v1/voter', description: 'Voter endpoints' },
       { path: '/api/v1/healthcheck', description: 'API health check' }
@@ -55,32 +41,12 @@ router.get(`/${API_VERSION}`, (_req, res) => {
   });
 });
 
-// Error handling middleware
-router.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-  console.error('API Error:', err);
-  
-  // Check for specific error types
-  if (err.name === 'ValidationError') {
-    return res.status(400).json({ 
-      error: 'Validation Error',
-      message: err.message,
-      status: 400
-    });
-  }
-  
-  if (err.name === 'UnauthorizedError') {
-    return res.status(401).json({ 
-      error: 'Unauthorized',
-      message: 'Invalid or expired token',
-      status: 401
-    });
-  }
-  
-  // Default to 500 server error
-  return res.status(500).json({ 
-    error: 'Server Error',
-    message: process.env.NODE_ENV === 'production' ? 'An unexpected error occurred' : err.message,
-    status: 500
+// Public API routes
+router.get(`/${API_VERSION}/healthcheck`, (_req, res) => {
+  res.status(200).json({ 
+    status: 'ok',
+    version: process.env.npm_package_version || '1.0.0',
+    timestamp: new Date().toISOString() 
   });
 });
 

@@ -5,6 +5,7 @@ import compression from 'compression';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import { createServer } from 'http';
+import path from 'path';
 import apiRoutes from './api/routes';
 import notificationService from './services/notification';
 
@@ -13,10 +14,20 @@ dotenv.config();
 
 // Initialize Express app
 const app = express();
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 5002;
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:"],
+      connectSrc: ["'self'", "localhost:5002"],
+    }
+  }
+}));
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:3000',
   credentials: true
@@ -27,6 +38,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(compression());
 app.use(morgan('dev'));
+
+// Serve static files from the public directory
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Rate limiting for production
 if (process.env.NODE_ENV === 'production') {
@@ -58,6 +72,11 @@ if (process.env.NODE_ENV === 'production') {
 // API routes
 app.use('/api', apiRoutes);
 
+// Serve the API tester page at the root URL
+app.get('/', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // Create HTTP server
 const server = createServer(app);
 
@@ -68,6 +87,7 @@ notificationService.initializeNotificationService(server);
 server.listen(PORT, () => {
   console.log(`✨ Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
   console.log(`🔗 API available at http://localhost:${PORT}/api/v1`);
+  console.log(`🌐 API Tester available at http://localhost:${PORT}/`);
 });
 
 // Handle unhandled promise rejections
