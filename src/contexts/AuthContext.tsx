@@ -24,6 +24,9 @@ interface AuthContextType {
   logout: () => void;
   isAuthenticated: boolean;
   updateProfile: (updates: { name?: string; profileImage?: string }) => Promise<void>;
+  forgotPassword: (email: string) => Promise<void>;
+  resetPassword: (token: string, newPassword: string) => Promise<void>;
+  forgotAccessCode: (voterId: string) => Promise<void>;
 }
 
 // Interface for voter info passing to parent component
@@ -47,7 +50,10 @@ const AuthContext = createContext<AuthContextType>({
   register: async () => {},
   logout: () => {},
   isAuthenticated: false,
-  updateProfile: async () => {}
+  updateProfile: async () => {},
+  forgotPassword: async () => {},
+  resetPassword: async () => {},
+  forgotAccessCode: async () => {}
 });
 
 // Custom hook to use the auth context
@@ -230,6 +236,85 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, onUserLogi
     }
   };
 
+  const forgotPassword = async (email: string) => {
+    setIsLoading(true);
+    try {
+      const response = await api.post('/auth/forgot-password', { email });
+      
+      if (response.data) {
+        toast.success("Password reset email sent!", {
+          description: "Please check your email for instructions to reset your password.",
+        });
+      } else {
+        throw new Error('Invalid response from server');
+      }
+    } catch (error) {
+      let errorMessage = "An unexpected error occurred";
+      
+      if (axios.isAxiosError(error)) {
+        errorMessage = error.response?.data?.message || "Password reset request failed";
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      // In this case, we don't want to show an error that the email doesn't exist
+      // for security reasons
+      toast.success("If your email is registered, you will receive reset instructions");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const resetPassword = async (token: string, newPassword: string) => {
+    setIsLoading(true);
+    try {
+      const response = await api.post(`/auth/reset-password/${token}`, { password: newPassword });
+      
+      if (response.data) {
+        toast.success("Password reset successful!", {
+          description: "Your password has been updated. You can now log in with your new password.",
+        });
+      } else {
+        throw new Error('Invalid response from server');
+      }
+    } catch (error) {
+      let errorMessage = "An unexpected error occurred";
+      
+      if (axios.isAxiosError(error)) {
+        errorMessage = error.response?.data?.message || "Password reset failed";
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      toast.error("Password reset failed", { description: errorMessage });
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const forgotAccessCode = async (voterId: string) => {
+    setIsLoading(true);
+    try {
+      // Since we don't have a specific endpoint for this yet, we'll use the forgotPassword endpoint
+      const response = await api.post('/auth/forgot-password', { voterId });
+      
+      if (response.data) {
+        toast.success("Access code reset email sent!", {
+          description: "Please check your email for instructions to reset your access code.",
+        });
+      } else {
+        throw new Error('Invalid response from server');
+      }
+    } catch (error) {
+      // For security reasons, we always want to show the same message
+      // even if the voterId doesn't exist
+      toast.success("If your Voter ID is registered, you will receive reset instructions");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <AuthContext.Provider value={{ 
       user, 
@@ -238,7 +323,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, onUserLogi
       register, 
       logout,
       isAuthenticated: !!user,
-      updateProfile
+      updateProfile,
+      forgotPassword,
+      resetPassword,
+      forgotAccessCode
     }}>
       {children}
     </AuthContext.Provider>

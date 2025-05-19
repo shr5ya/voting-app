@@ -1,0 +1,36 @@
+[
+  {
+    "id": "n4a2wj6",
+    "title": "Second Year CR Election 2025",
+    "description": "This election will decide the Class Representative for the 2nd Year B.Tech Computer Science batch. The CR will help in communication between faculty and students, coordinate academic events, and address class concerns.",
+    "startDate": "2023-05-20T00:00:00.000Z",
+    "endDate": "2025-05-25T00:00:00.000Z",
+    "candidates": [
+      {
+        "name": "Mehul Saini",
+        "position": "Class Representative",
+        "bio": "I'm always ready to help my classmates and ensure that every student's voice is heard. Let's make our class united and productive!",
+        "imageUrl": "https://randomuser.me/api/portraits/men/12.jpg",
+        "id": "b94ea7k",
+        "votes": 3
+      },
+      {
+        "name": "Riya Gupta",
+        "position": "Class Representative",
+        "bio": "A dedicated student with strong communication skills and leadership experience. I promise to bridge the gap between students and faculty.",
+        "imageUrl": "https://randomuser.me/api/portraits/women/23.jpg",
+        "id": "x5qdyem",
+        "votes": 0
+      }
+    ],
+    "voterCount": 0,
+    "status": "active",
+    "createdBy": "admin-user-id",
+    "createdAt": "2023-05-19T20:27:01.414Z",
+    "updatedAt": "2023-05-19T20:27:01.414Z",
+    "totalVotes": 3,
+    "voters": [
+      "admin-user-id"
+    ]
+  }
+]

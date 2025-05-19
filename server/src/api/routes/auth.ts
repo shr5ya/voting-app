@@ -258,19 +258,47 @@ router.get('/verify/:token', (req: Request, res: Response) => {
  */
 router.post('/forgot-password', (req: Request, res: Response) => {
   try {
-    const { email } = req.body;
+    const { email, voterId } = req.body;
 
-    // Validate request
-    if (!email) {
-      return res.status(400).json({ message: 'Email is required' });
+    // Check what type of request this is (admin/voter password or voter access code)
+    if (email) {
+      // Handle admin/user password reset request
+      const user = registeredUsers.find(u => u.email === email);
+      
+      if (user) {
+        // Generate a reset token (in a real app this would be a JWT or a random string)
+        const resetToken = jwt.sign({ id: user.id, email }, JWT_SECRET, { expiresIn: '1h' });
+        
+        // In a real app, send an email with the reset link containing the token
+        console.log(`Password reset requested for ${email}. Token: ${resetToken}`);
+      }
+      
+      // For security reasons, always return success even if email doesn't exist
+      return res.json({
+        message: 'If your email is registered, a password reset link has been sent to your email'
+      });
+    } else if (voterId) {
+      // Handle voter access code reset request
+      const voter = registeredUsers.find(u => 
+        u.role === UserRole.VOTER && 
+        (u.voterId === voterId || u.email === voterId)
+      );
+      
+      if (voter) {
+        // Generate a reset token
+        const resetToken = jwt.sign({ id: voter.id, voterId }, JWT_SECRET, { expiresIn: '1h' });
+        
+        // In a real app, send an email with the reset link containing the token
+        console.log(`Access code reset requested for voter ${voterId}. Token: ${resetToken}`);
+      }
+      
+      // For security reasons, always return success
+      return res.json({
+        message: 'If your Voter ID is registered, instructions to reset your access code have been sent'
+      });
+    } else {
+      return res.status(400).json({ message: 'Email or Voter ID is required' });
     }
-
-    // In a real implementation, generate reset token and send email
-    
-    // For demo, return success
-    return res.json({
-      message: 'Password reset link sent to your email'
-    });
   } catch (error) {
     return res.status(500).json({ message: 'Server error', error });
   }
@@ -283,7 +311,7 @@ router.post('/forgot-password', (req: Request, res: Response) => {
  */
 router.post('/reset-password/:token', (req: Request, res: Response) => {
   try {
-    const { token: _token } = req.params;
+    const { token } = req.params;
     const { password } = req.body;
 
     // Validate request
@@ -291,12 +319,75 @@ router.post('/reset-password/:token', (req: Request, res: Response) => {
       return res.status(400).json({ message: 'New password is required' });
     }
 
-    // In a real implementation, verify token and update password in database
-    
-    // For demo, return success
-    return res.json({
-      message: 'Password reset successful'
-    });
+    // Verify the token
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET) as { id: string, email?: string, voterId?: string };
+      
+      // Find the user
+      const userIndex = registeredUsers.findIndex(u => u.id === decoded.id);
+      
+      if (userIndex === -1) {
+        return res.status(400).json({ message: 'Invalid or expired token' });
+      }
+      
+      // Update the password
+      registeredUsers[userIndex].password = password;
+      
+      // Save users to file
+      saveUsers();
+      
+      return res.json({
+        message: 'Password has been reset successfully'
+      });
+    } catch (error) {
+      return res.status(400).json({ message: 'Invalid or expired token' });
+    }
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error', error });
+  }
+});
+
+/**
+ * @route   POST /api/auth/reset-access-code/:token
+ * @desc    Reset voter access code with token
+ * @access  Public
+ */
+router.post('/reset-access-code/:token', (req: Request, res: Response) => {
+  try {
+    const { token } = req.params;
+    const { accessCode } = req.body;
+
+    // Validate request
+    if (!accessCode) {
+      return res.status(400).json({ message: 'New access code is required' });
+    }
+
+    // Verify the token
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET) as { id: string, voterId?: string };
+      
+      // Find the voter
+      const voterIndex = registeredUsers.findIndex(u => 
+        u.id === decoded.id && u.role === UserRole.VOTER
+      );
+      
+      if (voterIndex === -1) {
+        return res.status(400).json({ message: 'Invalid or expired token' });
+      }
+      
+      // Update the access code (in a real app, this might be stored differently)
+      // Here we're using the password field for simplicity
+      registeredUsers[voterIndex].password = accessCode;
+      
+      // Save users to file
+      saveUsers();
+      
+      return res.json({
+        message: 'Access code has been reset successfully'
+      });
+    } catch (error) {
+      return res.status(400).json({ message: 'Invalid or expired token' });
+    }
   } catch (error) {
     return res.status(500).json({ message: 'Server error', error });
   }

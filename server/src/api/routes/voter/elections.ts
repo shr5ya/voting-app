@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { authenticateUser, checkVoterEligibility, AuthenticatedRequest } from '../../../middleware/auth';
 import { Response } from 'express';
 import { ElectionStatus } from '../../../types/election';
-import { getElections } from '../../../services';
+import { getElections, updateElection } from '../../../services';
 
 const router = Router();
 
@@ -84,23 +84,56 @@ router.post('/:id/vote', checkVoterEligibility, async (req: AuthenticatedRequest
   try {
     const electionId = req.params.id;
     const { candidateId } = req.body;
+    const userId = req.user?.id;
     
     // Validate required fields
     if (!candidateId) {
       return res.status(400).json({ message: 'Candidate ID is required' });
     }
     
-    // In a real implementation:
-    // 1. Check if election is active
-    // 2. Check if voter has already voted
-    // 3. Check if candidate exists in election
-    // 4. Record vote in database
+    // Get the election from the service
+    const election = getElections().find(e => e.id === electionId);
     
-    // Check if voter has already voted (mock check)
-    const hasVoted = false;
-    if (hasVoted) {
+    if (!election) {
+      return res.status(404).json({ message: 'Election not found' });
+    }
+    
+    // Check if election is active
+    if (election.status !== ElectionStatus.ACTIVE) {
+      return res.status(400).json({ message: `Cannot vote in an election with status: ${election.status}` });
+    }
+    
+    // Initialize voters array if it doesn't exist
+    if (!election.voters) {
+      election.voters = [];
+    }
+    
+    // Check if user has already voted
+    if (election.voters.includes(userId)) {
       return res.status(400).json({ message: 'You have already voted in this election' });
     }
+    
+    // Find the candidate
+    const candidateIndex = election.candidates.findIndex((c: any) => c.id === candidateId);
+    if (candidateIndex === -1) {
+      return res.status(404).json({ message: 'Candidate not found in this election' });
+    }
+    
+    // Increment the candidate's vote count
+    election.candidates[candidateIndex].votes += 1;
+    
+    // Increment the total votes for the election
+    election.totalVotes += 1;
+    
+    // Add user to the list of voters for this election
+    election.voters.push(userId);
+    
+    // Update the election
+    updateElection(electionId, {
+      candidates: election.candidates,
+      totalVotes: election.totalVotes,
+      voters: election.voters
+    });
     
     // Mock response
     res.status(201).json({

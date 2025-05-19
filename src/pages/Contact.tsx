@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Layout from '@/components/Layout';
 import { motion } from 'framer-motion';
 import { 
@@ -11,7 +11,10 @@ import {
   Twitter,
   Instagram,
   Linkedin,
-  Github
+  Github,
+  Calendar,
+  Building2,
+  Clock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +22,21 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const fadeIn = {
   hidden: { opacity: 0, y: 20 },
@@ -36,11 +54,45 @@ const staggerContainer = {
 };
 
 const Contact: React.FC = () => {
+  const [demoDialogOpen, setDemoDialogOpen] = useState(false);
+  const [isSubmittingDemo, setIsSubmittingDemo] = useState(false);
+  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // In a real app, you'd handle form submission to your backend
     toast.success('Your message has been sent successfully!');
   };
+
+  const handleDemoSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmittingDemo(true);
+    
+    // Simulate API call delay
+    setTimeout(() => {
+      // In a real app, you'd send this data to your backend
+      toast.success('Your demo request has been submitted!', {
+        description: 'Our team will contact you shortly to confirm the details.',
+      });
+      setDemoDialogOpen(false);
+      setIsSubmittingDemo(false);
+    }, 1500);
+  };
+
+  // Generate time slot options
+  const generateTimeSlots = () => {
+    const slots = [];
+    for (let hour = 9; hour <= 17; hour++) {
+      const hourStr = hour > 12 ? (hour - 12) : hour;
+      const amPm = hour >= 12 ? 'PM' : 'AM';
+      slots.push(`${hourStr}:00 ${amPm}`);
+      if (hour < 17) {
+        slots.push(`${hourStr}:30 ${amPm}`);
+      }
+    }
+    return slots;
+  };
+
+  const timeSlots = generateTimeSlots();
 
   return (
     <Layout>
@@ -236,7 +288,10 @@ const Contact: React.FC = () => {
                 <p className="text-muted-foreground mb-4">
                   Want to see Electra in action? Schedule a personalized demo with our team.
                 </p>
-                <Button className="w-full electra-button-secondary">
+                <Button 
+                  className="w-full electra-button-secondary"
+                  onClick={() => setDemoDialogOpen(true)}
+                >
                   Book a Demo
                 </Button>
               </CardContent>
@@ -260,6 +315,138 @@ const Contact: React.FC = () => {
             <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent pointer-events-none"></div>
           </div>
         </motion.div>
+
+        {/* Demo Request Dialog */}
+        <Dialog open={demoDialogOpen} onOpenChange={setDemoDialogOpen}>
+          <DialogContent className="glass-card max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-primary" />
+                Book a Demo
+              </DialogTitle>
+              <DialogDescription>
+                Fill in the form below to schedule a personalized demonstration of the Electra platform.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <form onSubmit={handleDemoSubmit} className="space-y-4 pt-2">
+              <div className="space-y-2">
+                <Label htmlFor="demo-name">Full Name</Label>
+                <Input 
+                  id="demo-name" 
+                  placeholder="John Doe" 
+                  className="glass-input"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="demo-email">Email Address</Label>
+                <Input 
+                  id="demo-email" 
+                  type="email" 
+                  placeholder="john@example.com" 
+                  className="glass-input"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="demo-company">
+                  <div className="flex items-center gap-1">
+                    <Building2 className="h-4 w-4 text-muted-foreground" />
+                    Organization/Company
+                  </div>
+                </Label>
+                <Input 
+                  id="demo-company" 
+                  placeholder="Your organization" 
+                  className="glass-input"
+                  required
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="demo-date">Preferred Date</Label>
+                  <Input 
+                    id="demo-date" 
+                    type="date" 
+                    className="glass-input"
+                    required
+                    min={new Date().toISOString().split('T')[0]}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="demo-time">
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      Preferred Time
+                    </div>
+                  </Label>
+                  <Select required>
+                    <SelectTrigger id="demo-time" className="glass-input">
+                      <SelectValue placeholder="Select time" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {timeSlots.map((slot) => (
+                        <SelectItem key={slot} value={slot}>{slot}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="demo-interest">What are you interested in?</Label>
+                <Textarea 
+                  id="demo-interest" 
+                  placeholder="Tell us what features you're most interested in seeing..." 
+                  className="glass-input min-h-[100px]"
+                  required
+                />
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <input 
+                  type="checkbox" 
+                  id="demo-consent" 
+                  className="rounded border-gray-300 text-primary focus:ring-primary"
+                  required
+                />
+                <Label htmlFor="demo-consent" className="text-sm">
+                  I agree to be contacted about Electra products and services
+                </Label>
+              </div>
+              
+              <DialogFooter className="pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setDemoDialogOpen(false)}
+                  className="glass-button-outline"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit"
+                  className="glass-button" 
+                  disabled={isSubmittingDemo}
+                >
+                  {isSubmittingDemo ? (
+                    <>
+                      <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></span>
+                      Scheduling...
+                    </>
+                  ) : (
+                    'Schedule Demo'
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </motion.div>
     </Layout>
   );

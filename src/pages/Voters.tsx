@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -6,14 +6,25 @@ import { useElection } from '@/contexts/ElectionContext';
 import { BadgeCheck, XCircle, Users } from 'lucide-react';
 import { GlassContainer } from '@/components/ui/glass-components';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 const Voters: React.FC = () => {
-  const { voters } = useElection();
+  const { voters, refreshVotersList } = useElection();
+
+  // Refresh voter data when component mounts
+  useEffect(() => {
+    refreshVotersList();
+  }, [refreshVotersList]);
+
+  const handleRefresh = () => {
+    refreshVotersList();
+  };
 
   return (
     <Layout>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold font-heading">Voters</h1>
+        <Button onClick={handleRefresh} variant="outline">Refresh Voters</Button>
       </div>
       
       <p className="text-muted-foreground mb-8">View and manage registered voters for your elections</p>

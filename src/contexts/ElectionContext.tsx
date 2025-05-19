@@ -136,6 +136,9 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
         
         setDataInitialized(true);
+        
+        // Force an immediate update of election statuses
+        setTimeout(() => updateElectionStatuses(), 100);
       } catch (err) {
         setError('Failed to load election data');
         console.error('Error loading data:', err);
@@ -226,8 +229,25 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Helper function to determine election status based on dates
   const determineStatus = (startDate: Date, endDate: Date): 'upcoming' | 'active' | 'completed' => {
     const now = new Date();
-    if (now < startDate) return 'upcoming';
-    if (now > endDate) return 'completed';
+    
+    console.log('Determining status for election:');
+    console.log('- Start date:', startDate);
+    console.log('- End date:', endDate);
+    console.log('- Current date:', now);
+    
+    // Ensure we're working with proper Date objects
+    const start = startDate instanceof Date ? startDate : new Date(startDate);
+    const end = endDate instanceof Date ? endDate : new Date(endDate);
+    
+    if (now < start) {
+      console.log('Status: upcoming');
+      return 'upcoming';
+    }
+    if (now > end) {
+      console.log('Status: completed');
+      return 'completed';
+    }
+    console.log('Status: active');
     return 'active';
   };
 
@@ -355,15 +375,17 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return voters.filter((voter) => voter.electionId === electionId);
   };
 
-  // Refresh voters list from API
-  const refreshVotersList = async (): Promise<void> => {
+  // Refresh the list of voters from the server
+  const refreshVotersList = async () => {
     try {
       const votersResponse = await api.get('/admin/voters');
+      console.log('Refreshed voters data:', votersResponse.data);
       setVoters(votersResponse.data);
+      return votersResponse.data;
     } catch (err) {
-      console.error('Error refreshing voters:', err);
-      setError('Failed to refresh voters');
-      toast.error('Failed to refresh voters list');
+      console.error('Error refreshing voters list:', err);
+      toast.error('Failed to refresh voters data');
+      return voters; // Return existing voters on error
     }
   };
 

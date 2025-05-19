@@ -120,11 +120,23 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
       });
     }
     
+    // Determine the correct status based on the current date
+    const now = new Date();
+    let status;
+    
+    if (now < startDate) {
+      status = ElectionStatus.UPCOMING;
+    } else if (now > endDate) {
+      status = ElectionStatus.COMPLETED;
+    } else {
+      status = ElectionStatus.ACTIVE; // Election is currently active
+    }
+    
     // Create the new election object
     const newElection = {
       id: Math.random().toString(36).substring(2, 9),
       ...electionData,
-      status: ElectionStatus.DRAFT,
+      status: status, // Use the determined status instead of DRAFT
       createdBy: req.user?.id,
       createdAt: new Date(),
       updatedAt: new Date(),

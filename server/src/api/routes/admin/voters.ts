@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { getElections } from '../../../services';
 
 const router = Router();
 
@@ -24,8 +25,32 @@ const voters: Voter[] = [
     email: "jane@example.com",
     hasVoted: true,
     electionId: "election-1"
+  },
+  {
+    id: "voter-3",
+    name: "Kanav Kumar",
+    email: "kumarkanav5753@gmail.com",
+    hasVoted: false
   }
 ];
+
+// Helper function to update voter status based on election data
+const syncVoterStatus = () => {
+  const elections = getElections();
+  
+  // Check each election's voters list and update the corresponding voter's hasVoted status
+  elections.forEach(election => {
+    if (election.voters && Array.isArray(election.voters)) {
+      election.voters.forEach((voterId: string) => {
+        const voterIndex = voters.findIndex(v => v.id === voterId);
+        if (voterIndex !== -1) {
+          voters[voterIndex].hasVoted = true;
+          voters[voterIndex].electionId = election.id;
+        }
+      });
+    }
+  });
+};
 
 /**
  * @route   GET /api/admin/voters
@@ -33,6 +58,8 @@ const voters: Voter[] = [
  * @access  Admin
  */
 router.get('/', (_req: Request, res: Response) => {
+  // Sync voter status with election data before returning
+  syncVoterStatus();
   return res.json(voters);
 });
 
@@ -42,6 +69,9 @@ router.get('/', (_req: Request, res: Response) => {
  * @access  Admin
  */
 router.get('/:id', (req: Request, res: Response) => {
+  // Sync voter status with election data before returning
+  syncVoterStatus();
+  
   const voter = voters.find(v => v.id === req.params.id);
   
   if (!voter) {

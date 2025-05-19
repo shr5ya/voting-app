@@ -29,8 +29,13 @@ const Dashboard: React.FC = () => {
     if (!initialLoadComplete) {
       const loadData = async () => {
         await refreshElections();
-        // Only update status after initial load
+        // Immediately update statuses after loading
         updateElectionStatuses();
+        // Force a second update after a short delay to ensure everything is properly processed
+        setTimeout(() => {
+          console.log('Force updating election statuses...');
+          updateElectionStatuses();
+        }, 500);
         setInitialLoadComplete(true);
       };
       

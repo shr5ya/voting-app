@@ -23,6 +23,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import AdminActionBar from '@/components/AdminActionBar';
 import ClearDataButton from '@/components/ClearDataButton';
+import { Election } from '@/contexts/ElectionContext';
 
 const statusBadgeVariant: Record<string, string> = {
   active: 'primary',
@@ -69,6 +70,15 @@ const ErrorState = ({ onRetry }: { onRetry: () => void }) => (
     </div>
   </GlassContainer>
 );
+
+// Helper function for formatting dates
+const formatDate = (date: Date): string => {
+  return new Date(date).toLocaleDateString('en-US', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+};
 
 const Elections: React.FC = () => {
   const { elections, isLoading, error, refreshElections } = useElection();
@@ -146,6 +156,87 @@ const Elections: React.FC = () => {
 
   const handleViewResults = (electionId: string) => {
     navigate(`/results/${electionId}`);
+  };
+
+  // Render election card
+  const renderElectionCard = (election: Election) => {
+    const badgeColor = 
+      election.status === 'active' ? 'bg-blue-600' :
+      election.status === 'upcoming' ? 'bg-amber-500' :
+      'bg-green-600';
+    
+    const badgeText = 
+      election.status === 'active' ? 'Active' :
+      election.status === 'upcoming' ? 'Upcoming' :
+      'Completed';
+    
+    const hasVotingEnded = election.status === 'completed';
+    
+    // Show total votes. For active elections, this is the actual number of voters who have participated
+    // not the sum of all candidate votes which could be higher if multiple candidates can be selected
+    const totalVotes = election.totalVotes || 0;
+    
+    return (
+      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+        <div className="mb-2">
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white ${badgeColor}`}>
+            {badgeText}
+          </span>
+        </div>
+        
+        <h3 className="text-xl font-semibold text-gray-900 mb-1">{election.title}</h3>
+        <p className="text-gray-600 mb-4 line-clamp-2">{election.description}</p>
+        
+        <div className="flex justify-between mb-5">
+          {hasVotingEnded ? (
+            <div>
+              <span className="text-sm text-gray-500">Total Votes</span>
+              <p className="font-medium">{totalVotes} / {totalVotes}</p>
+            </div>
+          ) : (
+            <div>
+              <span className="text-sm text-gray-500">End Date</span>
+              <p className="font-medium">{formatDate(election.endDate)}</p>
+            </div>
+          )}
+          
+          <div>
+            <span className="text-sm text-gray-500">Total Votes</span>
+            <p className="font-medium">{totalVotes} / {election.voterCount || 0}</p>
+          </div>
+        </div>
+        
+        <div className="flex flex-wrap gap-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => navigate(`/elections/${election.id}`)}
+          >
+            View Details
+          </Button>
+          
+          {hasVotingEnded ? (
+            <Button 
+              variant="default" 
+              size="sm"
+              onClick={() => handleViewResults(election.id)}
+            >
+              <BarChart2 className="h-4 w-4 mr-1" />
+              View Results
+            </Button>
+          ) : (
+            <Button 
+              variant="default" 
+              size="sm"
+              onClick={() => navigate(`/vote/${election.id}`)}
+            >
+              <Vote className="h-4 w-4 mr-1" />
+              Vote Now
+            </Button>
+          )}
+        </div>
+      </div>
+    );
   };
 
   return (

@@ -21,6 +21,14 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import Layout from '@/components/Layout';
 import { 
@@ -29,7 +37,8 @@ import {
   UserCog, 
   AtSign, 
   Lock, 
-  HelpCircle 
+  HelpCircle,
+  Mail
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
@@ -47,14 +56,28 @@ const voterLoginSchema = z.object({
   accessCode: z.string().min(4, { message: 'Access code must be at least 4 characters' }),
 });
 
+// Define form schema for password reset
+const passwordResetSchema = z.object({
+  email: z.string().email({ message: 'Please enter a valid email address' }),
+});
+
+// Define form schema for access code reset
+const accessCodeResetSchema = z.object({
+  voterId: z.string().min(3, { message: 'Please enter a valid voter ID or email' }),
+});
+
 type AdminLoginFormValues = z.infer<typeof adminLoginSchema>;
 type VoterLoginFormValues = z.infer<typeof voterLoginSchema>;
+type PasswordResetFormValues = z.infer<typeof passwordResetSchema>;
+type AccessCodeResetFormValues = z.infer<typeof accessCodeResetSchema>;
 
 const Login: React.FC = () => {
-  const { login } = useAuth();
+  const { login, forgotPassword, forgotAccessCode } = useAuth();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginMode, setLoginMode] = useState<'admin' | 'voter'>('admin');
+  const [passwordResetOpen, setPasswordResetOpen] = useState(false);
+  const [accessCodeResetOpen, setAccessCodeResetOpen] = useState(false);
 
   // Initialize the admin form
   const adminForm = useForm<AdminLoginFormValues>({
@@ -71,6 +94,22 @@ const Login: React.FC = () => {
     defaultValues: {
       voterId: '',
       accessCode: '',
+    },
+  });
+
+  // Initialize password reset form
+  const passwordResetForm = useForm<PasswordResetFormValues>({
+    resolver: zodResolver(passwordResetSchema),
+    defaultValues: {
+      email: '',
+    },
+  });
+
+  // Initialize access code reset form
+  const accessCodeResetForm = useForm<AccessCodeResetFormValues>({
+    resolver: zodResolver(accessCodeResetSchema),
+    defaultValues: {
+      voterId: '',
     },
   });
 
@@ -112,14 +151,41 @@ const Login: React.FC = () => {
     }
   };
 
+  // Handle password reset form submission
+  const onPasswordResetSubmit = async (values: PasswordResetFormValues) => {
+    setIsSubmitting(true);
+    try {
+      await forgotPassword(values.email);
+      setPasswordResetOpen(false);
+      passwordResetForm.reset();
+    } catch (error) {
+      console.error('Password reset request failed:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle access code reset form submission
+  const onAccessCodeResetSubmit = async (values: AccessCodeResetFormValues) => {
+    setIsSubmitting(true);
+    try {
+      await forgotAccessCode(values.voterId);
+      setAccessCodeResetOpen(false);
+      accessCodeResetForm.reset();
+    } catch (error) {
+      console.error('Access code reset request failed:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // Handle forgot password
   const handleForgotPassword = () => {
-    const userType = loginMode === 'admin' ? 'an administrator' : 'a voter';
-    
-    toast.info(`Reset Password`, {
-      description: `Instructions to reset your password will be sent if you are registered as ${userType}.`,
-      duration: 5000,
-    });
+    if (loginMode === 'admin') {
+      setPasswordResetOpen(true);
+    } else {
+      setAccessCodeResetOpen(true);
+    }
   };
 
   return (
@@ -141,14 +207,14 @@ const Login: React.FC = () => {
           </CardHeader>
           
           <CardContent>
-            <Tabs defaultValue="admin" className="w-full" onValueChange={(value) => setLoginMode(value as 'admin' | 'voter')}>
+            <Tabs defaultValue="admin" onValueChange={(value) => setLoginMode(value as 'admin' | 'voter')}>
               <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="admin" className="data-[state=active]:bg-primary data-[state=active]:text-white">
-                  <UserCog className="mr-2 h-4 w-4" />
+                <TabsTrigger value="admin" className="flex gap-2 items-center">
+                  <UserCog className="h-4 w-4" />
                   Administrator
                 </TabsTrigger>
-                <TabsTrigger value="voter" className="data-[state=active]:bg-primary data-[state=active]:text-white">
-                  <User className="mr-2 h-4 w-4" />
+                <TabsTrigger value="voter" className="flex gap-2 items-center">
+                  <User className="h-4 w-4" />
                   Voter
                 </TabsTrigger>
               </TabsList>
@@ -314,6 +380,138 @@ const Login: React.FC = () => {
           </div>
         </Card>
       </div>
+
+      {/* Password Reset Dialog */}
+      <Dialog open={passwordResetOpen} onOpenChange={setPasswordResetOpen}>
+        <DialogContent className="glass-card">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Mail className="h-5 w-5 mr-2 text-primary" />
+              Reset Your Password
+            </DialogTitle>
+            <DialogDescription>
+              Enter your email address and we'll send you instructions to reset your password.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...passwordResetForm}>
+            <form onSubmit={passwordResetForm.handleSubmit(onPasswordResetSubmit)} className="space-y-4">
+              <FormField
+                control={passwordResetForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center">
+                      <AtSign className="mr-1 h-4 w-4 text-muted-foreground" />
+                      Email Address
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        className="glass-input"
+                        type="email"
+                        placeholder="you@example.com"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <DialogFooter className="pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setPasswordResetOpen(false)}
+                  className="glass-button-outline"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit"
+                  className="glass-button" 
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    'Send Reset Link'
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Access Code Reset Dialog */}
+      <Dialog open={accessCodeResetOpen} onOpenChange={setAccessCodeResetOpen}>
+        <DialogContent className="glass-card">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Mail className="h-5 w-5 mr-2 text-primary" />
+              Reset Your Access Code
+            </DialogTitle>
+            <DialogDescription>
+              Enter your Voter ID or email and we'll send you instructions to reset your access code.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...accessCodeResetForm}>
+            <form onSubmit={accessCodeResetForm.handleSubmit(onAccessCodeResetSubmit)} className="space-y-4">
+              <FormField
+                control={accessCodeResetForm.control}
+                name="voterId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center">
+                      <User className="mr-1 h-4 w-4 text-muted-foreground" />
+                      Voter ID or Email
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        className="glass-input"
+                        type="text"
+                        placeholder="Enter your Voter ID or email"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <DialogFooter className="pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setAccessCodeResetOpen(false)}
+                  className="glass-button-outline"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit"
+                  className="glass-button" 
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    'Send Reset Link'
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };
