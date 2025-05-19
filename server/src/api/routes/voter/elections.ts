@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { authenticateUser, checkVoterEligibility, AuthenticatedRequest } from '../../../middleware/auth';
 import { Response } from 'express';
 import { ElectionStatus } from '../../../types/election';
+import { getElections } from '../../../services';
 
 const router = Router();
 
@@ -15,55 +16,10 @@ router.use(authenticateUser);
  */
 router.get('/', async (_req: AuthenticatedRequest, res: Response) => {
   try {
-    // In a real implementation, fetch from database based on voter ID
-    // Mock response with eligible elections
-    const elections = [
-      {
-        id: '1',
-        title: 'Community Council Election',
-        description: 'Election for new community council members',
-        startDate: new Date(Date.now() - 86400000), // 1 day ago
-        endDate: new Date(Date.now() + 4 * 86400000), // 4 days from now
-        status: ElectionStatus.ACTIVE,
-        hasVoted: false,
-        candidates: [
-          {
-            id: '1',
-            name: 'John Doe',
-            description: 'Community activist',
-            position: 'President'
-          },
-          {
-            id: '2',
-            name: 'Jane Smith',
-            description: 'Local business owner',
-            position: 'Secretary'
-          }
-        ]
-      },
-      {
-        id: '2',
-        title: 'School Board Members',
-        description: 'Election for new school board members',
-        startDate: new Date(Date.now() + 10 * 86400000), // 10 days from now
-        endDate: new Date(Date.now() + 17 * 86400000), // 17 days from now
-        status: ElectionStatus.UPCOMING,
-        hasVoted: false,
-        candidates: []
-      },
-      {
-        id: '3',
-        title: 'Budget Committee',
-        description: 'Election for budget committee members',
-        startDate: new Date(Date.now() - 20 * 86400000), // 20 days ago
-        endDate: new Date(Date.now() - 13 * 86400000), // 13 days ago
-        status: ElectionStatus.COMPLETED,
-        hasVoted: true,
-        resultsAvailable: true
-      }
-    ];
+    // Get all elections (now includes mock elections if enabled)
+    const allElections = getElections();
     
-    res.json(elections);
+    res.json(allElections);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error });
   }

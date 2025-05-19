@@ -1,8 +1,8 @@
-
 import React from 'react';
 import { ChevronUp, Vote, Users, CheckCircle2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { useElection } from '@/contexts/ElectionContext';
 
 interface StatCardProps {
   title: string;
@@ -69,19 +69,30 @@ interface StatsProps {
 }
 
 const Stats: React.FC<StatsProps> = ({ className }) => {
+  const { elections, activeElections, voters } = useElection();
+  
+  // Calculate total votes
+  const totalVotes = elections.reduce((total, election) => total + (election.totalVotes || 0), 0);
+  
+  // Calculate participation rate
+  const totalVoters = voters.length;
+  const participationRate = totalVoters > 0 
+    ? Math.round((totalVotes / totalVoters) * 100) 
+    : 0;
+  
   return (
     <div className={cn("grid gap-4 md:grid-cols-2 lg:grid-cols-3", className)}>
       <StatCard
         title="Total Elections"
-        value="12"
-        description="3 active now"
+        value={elections.length}
+        description={`${activeElections.length} active now`}
         icon={<Vote className="h-4 w-4 text-primary" />}
         trendingUp
         trendValue="16.2%"
       />
       <StatCard
         title="Registered Voters"
-        value="2,453"
+        value={totalVoters || 0}
         description="from last month"
         icon={<Users className="h-4 w-4 text-primary" />}
         trendingUp
@@ -89,8 +100,8 @@ const Stats: React.FC<StatsProps> = ({ className }) => {
       />
       <StatCard
         title="Votes Cast"
-        value="1,789"
-        description="72.9% participation"
+        value={totalVotes || 0}
+        description={`${participationRate}% participation`}
         icon={<CheckCircle2 className="h-4 w-4 text-primary" />}
         trendingUp
         trendValue="12.3%"

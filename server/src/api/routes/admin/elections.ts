@@ -6,6 +6,7 @@ import {
   UpdateElectionRequest 
 } from '../../../types/election';
 import { Response } from 'express';
+import { addElection, clearElections } from '../../../services';
 
 const router = Router();
 
@@ -119,7 +120,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
       });
     }
     
-    // Mock response
+    // Create the new election object
     const newElection = {
       id: Math.random().toString(36).substring(2, 9),
       ...electionData,
@@ -131,7 +132,10 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
       totalVotes: 0
     };
     
-    // In a real implementation, save to database
+    // Add to the service
+    addElection(newElection);
+    
+    // Return the new election
     res.status(201).json(newElection);
     return;
   } catch (error) {
@@ -236,6 +240,20 @@ router.post('/:id/status', async (req: AuthenticatedRequest, res: Response) => {
   } catch (error) {
     res.status(500).json({ message: 'Server error', error });
     return;
+  }
+});
+
+/**
+ * @route   DELETE /api/admin/elections/all
+ * @desc    Clear all elections (mainly for development/testing)
+ * @access  Admin only
+ */
+router.delete('/all', async (_req: AuthenticatedRequest, res: Response) => {
+  try {
+    clearElections();
+    res.json({ message: 'All elections cleared successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error });
   }
 });
 

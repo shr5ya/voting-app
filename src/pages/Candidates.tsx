@@ -7,18 +7,37 @@ import { useElection } from '@/contexts/ElectionContext';
 import { GlassContainer } from '@/components/ui/glass-components';
 
 const Candidates: React.FC = () => {
-  const { elections } = useElection();
+  const { elections, isLoading } = useElection();
   
   // Collect all candidates from all elections
   const allCandidates = useMemo(() => {
-    return elections.flatMap(election => 
-      election.candidates.map(candidate => ({
-        ...candidate,
-        electionTitle: election.title,
-        electionId: election.id
-      }))
-    );
+    if (!elections || !Array.isArray(elections)) {
+      return [];
+    }
+
+    return elections
+      .filter(election => election && election.candidates && Array.isArray(election.candidates)) // Ensure candidates is an array
+      .flatMap(election => 
+        election.candidates.map(candidate => ({
+          ...candidate,
+          electionTitle: election.title,
+          electionId: election.id
+        }))
+      );
   }, [elections]);
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center min-h-[60vh]">
+          <div className="animate-pulse text-center">
+            <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground/70" />
+            <h3 className="text-xl font-medium">Loading candidates...</h3>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -28,7 +47,7 @@ const Candidates: React.FC = () => {
       
       <p className="text-muted-foreground mb-8">Browse and learn about candidates running in current and upcoming elections</p>
       
-      {allCandidates.length > 0 ? (
+      {allCandidates && allCandidates.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {allCandidates.map(candidate => (
             <Card key={`${candidate.electionId}-${candidate.id}`} className="glass-card hover:shadow-lg transition-all duration-200">

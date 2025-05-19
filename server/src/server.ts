@@ -24,14 +24,24 @@ app.use(helmet({
       scriptSrc: ["'self'", "'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:"],
-      connectSrc: ["'self'", "localhost:5002"],
+      connectSrc: ["'self'", "localhost:5002", "localhost:8080", "localhost:3000"],
     }
   }
 }));
+
+// Enable CORS for all routes
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  origin: ['http://localhost:3000', 'http://localhost:8080'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
+
+// Log all requests for debugging
+app.use((req, _res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  next();
+});
 
 // Utility middleware
 app.use(express.json());

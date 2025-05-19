@@ -4,6 +4,7 @@ import adminUsersRouter from './admin/users';
 import adminCandidatesRouter from './admin/candidates';
 import adminStatsRouter from './admin/stats';
 import adminConfigRouter from './admin/config';
+import adminVotersRouter from './admin/voters';
 import voterElectionsRouter from './voter/elections';
 import authRouter from './auth';
 
@@ -22,6 +23,7 @@ router.use(`/${API_VERSION}/admin/users`, adminUsersRouter);
 router.use(`/${API_VERSION}/admin/candidates`, adminCandidatesRouter);
 router.use(`/${API_VERSION}/admin/stats`, adminStatsRouter);
 router.use(`/${API_VERSION}/admin/config`, adminConfigRouter);
+router.use(`/${API_VERSION}/admin/voters`, adminVotersRouter);
 
 // Voter routes
 router.use(`/${API_VERSION}/voter/elections`, voterElectionsRouter);

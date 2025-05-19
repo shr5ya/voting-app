@@ -75,9 +75,12 @@ const Results: React.FC = () => {
       </Layout>
     );
   }
+
+  // Ensure election has candidates array
+  const candidates = Array.isArray(election.candidates) ? election.candidates : [];
   
   // Format data for charts with properly spaced colors
-  const chartData = election.candidates.map((candidate, index) => {
+  const chartData = candidates.map((candidate, index) => {
     // Create distinct colors with good separation
     const hue = (index * 137.5) % 360; // Golden angle approximation for better distribution
     return {
@@ -88,7 +91,7 @@ const Results: React.FC = () => {
   });
   
   // Sort candidates by votes (descending)
-  const sortedCandidates = [...election.candidates].sort((a, b) => b.votes - a.votes);
+  const sortedCandidates = [...candidates].sort((a, b) => b.votes - a.votes);
   
   // Calculate if we have a winner or tie
   const hasWinner = sortedCandidates.length > 0 && 
@@ -119,6 +122,11 @@ const Results: React.FC = () => {
   const handlePrint = () => {
     window.print();
   };
+
+  // Calculate participation rate safely
+  const participationRate = election.voterCount && election.voterCount > 0 
+    ? Math.round((election.totalVotes / election.voterCount) * 100) 
+    : 0;
   
   return (
     <Layout>
@@ -201,17 +209,17 @@ const Results: React.FC = () => {
                 </div>
                 <div className="bg-white/20 dark:bg-gray-800/20 p-3 rounded-lg backdrop-blur-sm">
                   <div className="text-sm font-medium text-muted-foreground">Total Votes</div>
-                  <div className="font-medium text-lg">{election.totalVotes}</div>
+                  <div className="font-medium text-lg">{election.totalVotes || 0}</div>
                 </div>
                 <div className="bg-white/20 dark:bg-gray-800/20 p-3 rounded-lg backdrop-blur-sm">
                   <div className="text-sm font-medium text-muted-foreground">Eligible Voters</div>
-                  <div className="font-medium text-lg">{election.voterCount}</div>
+                  <div className="font-medium text-lg">{election.voterCount || 0}</div>
                 </div>
                 <div className="bg-white/20 dark:bg-gray-800/20 p-3 rounded-lg backdrop-blur-sm">
                   <div className="text-sm font-medium text-muted-foreground">Participation Rate</div>
                   <div className="font-medium text-lg flex items-center gap-2">
-                    {Math.round((election.totalVotes / election.voterCount) * 100)}%
-                    {election.totalVotes / election.voterCount > 0.5 ? (
+                    {participationRate}%
+                    {participationRate > 50 ? (
                       <ChevronUp className="h-4 w-4 text-green-500" />
                     ) : (
                       <ChevronDown className="h-4 w-4 text-amber-500" />
@@ -220,7 +228,7 @@ const Results: React.FC = () => {
                 </div>
                 <div className="bg-white/20 dark:bg-gray-800/20 p-3 rounded-lg backdrop-blur-sm">
                   <div className="text-sm font-medium text-muted-foreground">End Date</div>
-                  <div className="font-medium">{election.endDate.toLocaleDateString()}</div>
+                  <div className="font-medium">{election.endDate ? election.endDate.toLocaleDateString() : 'Not set'}</div>
                 </div>
               </div>
             </CardContent>
@@ -293,7 +301,7 @@ const Results: React.FC = () => {
                           }}
                           payload={
                             chartData.map((item, index) => ({
-                              id: index,
+                              id: index.toString(),
                               value: `${item.name} (${item.value} votes)`,
                               color: item.color,
                               type: 'square'
@@ -308,7 +316,10 @@ const Results: React.FC = () => {
                             border: 'none',
                             padding: '10px'
                           }}
-                          formatter={(value, name) => [`${value} votes (${Math.round((value / election.totalVotes) * 100)}%)`, name]}
+                          formatter={(value: number, name) => [
+                            `${value} votes (${Math.round((value / (election.totalVotes || 1)) * 100)}%)`, 
+                            name
+                          ]}
                           labelFormatter={() => 'Votes'}
                         />
                       </PieChart>
@@ -330,7 +341,10 @@ const Results: React.FC = () => {
                             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
                             border: 'none'
                           }}
-                          formatter={(value) => [`${value} votes (${Math.round((value as number / election.totalVotes) * 100)}%)`, 'Votes']}
+                          formatter={(value) => [
+                            `${value} votes (${Math.round(((value as number) / (election.totalVotes || 1)) * 100)}%)`, 
+                            'Votes'
+                          ]}
                         />
                         <Bar 
                           dataKey="value" 
@@ -366,7 +380,10 @@ const Results: React.FC = () => {
               </Avatar>
               <p className="text-xl font-bold">{sortedCandidates[0].name}</p>
               <p className="text-muted-foreground mb-4">{sortedCandidates[0].position}</p>
-              <Badge className="bg-amber-500/80">{sortedCandidates[0].votes} Votes ({Math.round((sortedCandidates[0].votes / election.totalVotes) * 100)}%)</Badge>
+              <Badge className="bg-amber-500/80">
+                {sortedCandidates[0].votes} Votes 
+                ({Math.round((sortedCandidates[0].votes / (election.totalVotes || 1)) * 100)}%)
+              </Badge>
             </div>
           </GlassContainer>
         )}

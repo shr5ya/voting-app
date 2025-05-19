@@ -14,10 +14,26 @@ export interface AuthenticatedRequest extends Request {
 // JWT secret - should be in environment variables in production
 const JWT_SECRET = process.env.JWT_SECRET || 'electra-secret-key';
 
+// Set to true to disable auth for development
+const DISABLE_AUTH_FOR_DEV = true;
+
 /**
  * Middleware to verify if the user is authenticated
  */
 export const authenticateUser = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  // Skip authentication in development mode
+  if (DISABLE_AUTH_FOR_DEV) {
+    console.log('⚠️ Authentication disabled for development');
+    // Set a default admin user
+    req.user = {
+      id: 'admin-user-id',
+      email: 'admin@example.com',
+      role: UserRole.ADMIN
+    };
+    next();
+    return;
+  }
+
   try {
     // Get the token from headers
     const authHeader = req.headers.authorization;
@@ -47,6 +63,12 @@ export const authenticateUser = (req: AuthenticatedRequest, res: Response, next:
  * Middleware to verify if the user is an admin
  */
 export const authorizeAdmin = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  // Skip authorization in development mode
+  if (DISABLE_AUTH_FOR_DEV) {
+    next();
+    return;
+  }
+
   if (!req.user) {
     return res.status(401).json({ message: 'Authentication required' });
   }
@@ -63,6 +85,12 @@ export const authorizeAdmin = (req: AuthenticatedRequest, res: Response, next: N
  * Middleware to check voter eligibility for a specific election
  */
 export const checkVoterEligibility = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  // Skip eligibility check in development mode
+  if (DISABLE_AUTH_FOR_DEV) {
+    next();
+    return;
+  }
+
   if (!req.user) {
     return res.status(401).json({ message: 'Authentication required' });
   }

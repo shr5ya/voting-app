@@ -1,5 +1,29 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import axios from 'axios';
+
+// Setup axios instance
+const api = axios.create({
+  baseURL: 'http://localhost:5002/api/v1',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Add request interceptor to include auth token in headers
+api.interceptors.request.use(
+  (config) => {
+    const userJson = localStorage.getItem('electra-user');
+    if (userJson) {
+      const user = JSON.parse(userJson);
+      if (user.token) {
+        config.headers.Authorization = `Bearer ${user.token}`;
+      }
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 // Interfaces
 export interface Candidate {
@@ -34,13 +58,13 @@ export interface Voter {
 interface ElectionContextType {
   elections: Election[];
   voters: Voter[];
-  createElection: (election: Omit<Election, 'id' | 'totalVotes' | 'status'>) => void;
+  createElection: (election: Omit<Election, 'id' | 'totalVotes' | 'status'>) => Promise<void>;
   addCandidate: (electionId: string, candidate: Omit<Candidate, 'id' | 'votes'>) => void;
-  addVoter: (voter: Omit<Voter, 'id' | 'hasVoted'>) => void;
-  castVote: (electionId: string, candidateId: string, voterId: string) => boolean;
+  addVoter: (electionId: string, voter: Omit<Voter, 'id' | 'hasVoted'>) => Promise<void>;
+  castVote: (electionId: string, candidateId: string, voterId: string) => Promise<boolean>;
   getElection: (id: string) => Election | undefined;
   deleteElection: (id: string) => void;
-  stopPolling: (id: string) => void;
+  stopPolling: (id: string) => Promise<void>;
   removeVoter: (id: string) => void;
   removeCandidate: (id: string) => void;
   activeElections: Election[];
@@ -50,13 +74,13 @@ interface ElectionContextType {
   updateCandidate: (electionId: string, candidateId: string, updated: Partial<Omit<Candidate, 'id' | 'votes'>>) => void;
   isLoading: boolean;
   error: string | null;
-  refreshElections: () => void;
+  refreshElections: () => Promise<void>;
+  clearAllData: () => Promise<void>;
+  updateElectionStatuses: () => void;
+  getVotersForElection: (electionId: string) => Voter[];
+  refreshVotersList: () => Promise<void>;
+  updateElection: (id: string, updates: { title?: string; description?: string; startDate?: Date; endDate?: Date }) => Promise<void>;
 }
-
-// Mock data
-const mockCandidates: Candidate[] = [];
-const mockElections: Election[] = [];
-const mockVoters: Voter[] = [];
 
 // Create the context
 const ElectionContext = createContext<ElectionContextType | undefined>(undefined);
@@ -83,22 +107,39 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setIsLoading(true);
         setError(null);
         
-        // Clear all previous data from localStorage
-        localStorage.removeItem('elections');
-        localStorage.removeItem('voters');
+        // Load elections from API
+        const electionsResponse = await api.get('/voter/elections');
         
-        // Initialize with empty arrays
-        setElections([]);
-        setVoters([]);
+        // Format dates from API response and pre-process status
+        const formattedElections = electionsResponse.data.map((election: any) => {
+          const startDate = new Date(election.startDate);
+          const endDate = new Date(election.endDate);
+          
+          return {
+            ...election,
+            startDate,
+            endDate,
+            // Determine status immediately based on current date
+            status: determineStatus(startDate, endDate)
+          };
+        });
         
-        // Store empty arrays in localStorage
-        localStorage.setItem('elections', JSON.stringify([]));
-        localStorage.setItem('voters', JSON.stringify([]));
+        setElections(formattedElections);
+        
+        // Load voters - this might need to be adjusted based on your API structure
+        try {
+          const votersResponse = await api.get('/admin/voters');
+          setVoters(votersResponse.data);
+        } catch (voterErr) {
+          console.warn('Could not load voters data. This might be expected for non-admin users.');
+          // Non-critical error, don't set the main error state
+        }
         
         setDataInitialized(true);
       } catch (err) {
-        setError('Failed to initialize data');
-        console.error('Error initializing data:', err);
+        setError('Failed to load election data');
+        console.error('Error loading data:', err);
+        toast.error('Failed to load election data');
       } finally {
         setIsLoading(false);
       }
@@ -107,19 +148,38 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     loadData();
   }, []);
 
-  // Save elections to localStorage whenever they change
+  // Periodically update election status based on current date
   useEffect(() => {
-    if (dataInitialized) {
-      localStorage.setItem('elections', JSON.stringify(elections));
-    }
-  }, [elections, dataInitialized]);
-
-  // Save voters to localStorage whenever they change
-  useEffect(() => {
-    if (dataInitialized) {
-      localStorage.setItem('voters', JSON.stringify(voters));
-    }
-  }, [voters, dataInitialized]);
+    if (!elections.length) return;
+    
+    // Don't update immediately, only set up interval
+    // This prevents unnecessary updates when data is already fresh
+    
+    // Set up interval to update every 5 minutes
+    const intervalId = setInterval(() => {
+      const now = new Date();
+      let needsUpdate = false;
+      
+      // Only update if at least one election might need status change
+      for (const election of elections) {
+        const currentStatus = election.status;
+        const newStatus = determineStatus(election.startDate, election.endDate);
+        
+        if (currentStatus !== newStatus) {
+          needsUpdate = true;
+          break;
+        }
+      }
+      
+      if (needsUpdate) {
+        updateElectionStatuses();
+      }
+    }, 300000); // 5 minutes (previously 60000 - 1 minute)
+    
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [elections]);
 
   // Refresh elections data
   const refreshElections = async () => {
@@ -129,29 +189,24 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setIsLoading(true);
       setError(null);
       
-      // Simulate API fetch with a delayed response
-      await new Promise(resolve => setTimeout(resolve, 400));
+      // Fetch updated elections from API
+      const response = await api.get('/voter/elections');
       
-      // Check for election status updates based on current date
-      const now = new Date();
-      const updatedElections = elections.map(election => {
-        let status = election.status;
+      // Format dates from API response and pre-process status
+      const formattedElections = response.data.map((election: any) => {
+        const startDate = new Date(election.startDate);
+        const endDate = new Date(election.endDate);
         
-        if (election.startDate <= now && election.endDate >= now) {
-          status = 'active';
-        } else if (election.endDate < now) {
-          status = 'completed';
-        } else if (election.startDate > now) {
-          status = 'upcoming';
-        }
-        
-        return { ...election, status } as Election;
+        return {
+          ...election,
+          startDate,
+          endDate,
+          // Determine status immediately based on current date
+          status: determineStatus(startDate, endDate)
+        };
       });
       
-      setElections(updatedElections);
-      
-      // Update localStorage
-      localStorage.setItem('elections', JSON.stringify(updatedElections));
+      setElections(formattedElections);
       
       toast.success('Election data refreshed');
     } catch (err) {
@@ -168,6 +223,30 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const completedElections = elections.filter(election => election.status === 'completed');
   const upcomingElections = elections.filter(election => election.status === 'upcoming');
 
+  // Helper function to determine election status based on dates
+  const determineStatus = (startDate: Date, endDate: Date): 'upcoming' | 'active' | 'completed' => {
+    const now = new Date();
+    if (now < startDate) return 'upcoming';
+    if (now > endDate) return 'completed';
+    return 'active';
+  };
+
+  // Update election statuses based on current date
+  const updateElectionStatuses = () => {
+    setElections(prevElections => 
+      prevElections.map(election => {
+        const currentStatus = determineStatus(election.startDate, election.endDate);
+        
+        // Only update if status needs to change
+        if (election.status !== currentStatus) {
+          return { ...election, status: currentStatus };
+        }
+        
+        return election;
+      })
+    );
+  };
+
   // Get a specific election
   const getElection = (id: string) => {
     return elections.find(election => election.id === id);
@@ -175,53 +254,46 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Create a new election
   const createElection = (election: Omit<Election, 'id' | 'totalVotes' | 'status'>) => {
-    return new Promise<void>((resolve, reject) => {
-    try {
-      setIsLoading(true);
-      
-        // Simulate API call delay
-        setTimeout(() => {
-      const now = new Date();
-      let status: 'upcoming' | 'active' | 'completed' = 'upcoming';
-      
-      if (election.startDate <= now && election.endDate >= now) {
-        status = 'active';
-      } else if (election.endDate < now) {
-        status = 'completed';
-      }
-      
-      const newElection: Election = {
-        ...election,
-        id: Math.random().toString(36).substring(2, 9),
-        totalVotes: 0,
-        status,
-      };
-      
-          // Update state with the new election
-          setElections(prevElections => {
-            const updatedElections = [...prevElections, newElection];
-            // Save to localStorage immediately after state update
-            localStorage.setItem('elections', JSON.stringify(updatedElections));
-            return updatedElections;
-          });
-          
-          setIsLoading(false);
-      toast.success('Election created successfully!');
-          resolve();
-        }, 800);
-    } catch (err) {
-      setError('Failed to create election');
-      console.error('Error creating election:', err);
-      toast.error('Failed to create election');
-      setIsLoading(false);
+    return new Promise<void>(async (resolve, reject) => {
+      try {
+        setIsLoading(true);
+        
+        // Determine the status based on dates
+        const status = determineStatus(election.startDate, election.endDate);
+        
+        // Send election data to API with determined status
+        const response = await api.post('/admin/elections', {
+          ...election,
+          status
+        });
+        
+        // Update local state with the new election from API
+        const newElection = {
+          ...response.data,
+          startDate: new Date(response.data.startDate),
+          endDate: new Date(response.data.endDate),
+          status: determineStatus(new Date(response.data.startDate), new Date(response.data.endDate))
+        };
+        
+        setElections(prevElections => [...prevElections, newElection]);
+        
+        toast.success('Election created successfully!');
+        setIsLoading(false);
+        resolve();
+      } catch (err) {
+        setError('Failed to create election');
+        console.error('Error creating election:', err);
+        toast.error('Failed to create election');
+        setIsLoading(false);
         reject(err);
-    }
+      }
     });
   };
 
   // Delete an election
-  const deleteElection = (id: string) => {
+  const deleteElection = async (id: string) => {
     try {
+      await api.delete(`/admin/elections/${id}`);
       setElections(prev => prev.filter(e => e.id !== id));
       toast.success('Election deleted successfully!');
     } catch (err) {
@@ -232,8 +304,10 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   // Add a candidate to an election
-  const addCandidate = (electionId: string, candidate: Omit<Candidate, 'id' | 'votes'>) => {
+  const addCandidate = async (electionId: string, candidate: Omit<Candidate, 'id' | 'votes'>) => {
     try {
+      const response = await api.post(`/admin/elections/${electionId}/candidates`, candidate);
+      
       setElections(prevElections => {
         return prevElections.map(election => {
           if (election.id === electionId) {
@@ -241,11 +315,7 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
               ...election,
               candidates: [
                 ...election.candidates,
-                {
-                  ...candidate,
-                  id: Math.random().toString(36).substring(2, 9),
-                  votes: 0
-                }
+                response.data
               ]
             };
           }
@@ -260,126 +330,103 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  // Add a voter
-  const addVoter = (voter: Omit<Voter, 'id' | 'hasVoted'>) => {
+  // Get all voters for a specific election
+  const getVotersForElection = (electionId: string): Voter[] => {
+    return voters.filter((voter) => voter.electionId === electionId);
+  };
+
+  // Refresh voters list from API
+  const refreshVotersList = async (): Promise<void> => {
     try {
-      const newVoter: Voter = {
-        ...voter,
-        id: Math.random().toString(36).substring(2, 9),
-        hasVoted: false
+      const votersResponse = await api.get('/admin/voters');
+      setVoters(votersResponse.data);
+    } catch (err) {
+      console.error('Error refreshing voters:', err);
+      setError('Failed to refresh voters');
+      toast.error('Failed to refresh voters list');
+    }
+  };
+
+  // Add a voter to an election
+  const addVoter = async (electionId: string, voter: Omit<Voter, 'id' | 'hasVoted'>): Promise<void> => {
+    try {
+      // Call API to add voter
+      const response = await api.post(`/admin/elections/${electionId}/voters`, voter);
+      
+      // Add the new voter to the local state
+      const newVoter = {
+        ...response.data,
+        hasVoted: false,
+        electionId
       };
-      setVoters([...voters, newVoter]);
+      
+      setVoters(prev => [...prev, newVoter]);
+      
+      // Update the election's voterCount
+      setElections(prev => prev.map(election => 
+        election.id === electionId 
+          ? { ...election, voterCount: election.voterCount + 1 } 
+          : election
+      ));
+      
       toast.success('Voter added successfully!');
     } catch (err) {
-      setError('Failed to add voter');
       console.error('Error adding voter:', err);
+      setError('Failed to add voter');
       toast.error('Failed to add voter');
+      throw err;
     }
   };
 
   // Cast a vote
-  const castVote = (electionId: string, candidateId: string, voterId: string): boolean => {
+  const castVote = async (electionId: string, candidateId: string, voterId: string): Promise<boolean> => {
     try {
-      // Check if the voter exists in our voters array
-      let voter = voters.find(v => v.id === voterId);
+      // Call the API to cast a vote
+      await api.post(`/voter/elections/${electionId}/vote`, { candidateId });
       
-      // If voter doesn't exist in our system yet, add them
-      if (!voter) {
-        // Get user info from localStorage as a fallback (this assumes AuthContext saved user data)
-        const savedUserStr = localStorage.getItem('electra-user');
-        if (savedUserStr) {
-          const savedUser = JSON.parse(savedUserStr);
-          if (savedUser && savedUser.id === voterId) {
-            // Create a new voter entry
-            voter = {
-              id: voterId,
-              name: savedUser.name || 'Voter',
-              email: savedUser.email || '',
-              hasVoted: false
-            };
-            // Add to voters array
-            setVoters(prev => [...prev, voter]);
-          }
-        }
-      }
+      // Refresh the elections to get the updated vote count
+      await refreshElections();
       
-      // Now check if the voter exists and hasn't voted
-      if (!voter) {
-        toast.error('Voter not found in the system.');
-        return false;
-      }
-      
-      // Check if the voter has already voted in ANY election (not just this one)
-      if (voter.hasVoted) {
-        toast.error('You have already voted in an election.');
-        return false;
-      }
-
-      // Update the elections state
-      setElections(prevElections => {
-        return prevElections.map(election => {
-          if (election.id === electionId) {
-            // Update the candidate's vote count
-            const updatedCandidates = election.candidates.map(candidate => {
-              if (candidate.id === candidateId) {
-                return { ...candidate, votes: candidate.votes + 1 };
-              }
-              return candidate;
-            });
-            
-            return {
-              ...election,
-              candidates: updatedCandidates,
-              totalVotes: election.totalVotes + 1
-            };
-          }
-          return election;
-        });
-      });
-
-      // Update the voter's status
-      setVoters(prevVoters => {
-        return prevVoters.map(v => {
-          if (v.id === voterId) {
-            return { ...v, hasVoted: true, electionId };
-          }
-          return v;
-        });
-      });
-
-      // Save the updated elections and voters to localStorage
-      setTimeout(() => {
-        localStorage.setItem('elections', JSON.stringify(elections));
-        localStorage.setItem('voters', JSON.stringify(voters));
-      }, 100);
-
       toast.success('Vote cast successfully!');
       return true;
-    } catch (err) {
+    } catch (err: any) {
       setError('Failed to cast vote');
       console.error('Error casting vote:', err);
-      toast.error('Failed to cast vote');
+      
+      // Show more specific error message if available from API
+      if (err.response && err.response.data && err.response.data.message) {
+        toast.error(err.response.data.message);
+      } else {
+        toast.error('Failed to cast vote');
+      }
+      
       return false;
     }
   };
 
-  // Stop polling
-  const stopPolling = (id: string) => {
+  // Stop polling (complete an election)
+  const stopPolling = async (id: string): Promise<void> => {
     try {
+      await api.post(`/admin/elections/${id}/complete`);
+      
       setElections(prev => prev.map(election => 
         election.id === id ? { ...election, status: 'completed' } : election
       ));
+      
       toast.success('Election has been completed.');
     } catch (err) {
       setError('Failed to complete election');
       console.error('Error completing election:', err);
       toast.error('Failed to complete election');
+      throw err;
     }
   };
 
   // Remove voter
-  const removeVoter = (id: string) => {
+  const removeVoter = async (id: string) => {
     try {
+      await api.delete(`/admin/voters/${id}`);
+      
       setVoters(prev => prev.filter(voter => voter.id !== id));
       toast.success('Voter removed successfully!');
     } catch (err) {
@@ -390,14 +437,18 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   // Remove candidate
-  const removeCandidate = (id: string) => {
+  const removeCandidate = async (id: string) => {
     try {
+      // Note: This API endpoint might need to be adjusted based on your backend structure
+      await api.delete(`/admin/candidates/${id}`);
+      
       setElections(prev => 
         prev.map(election => ({
           ...election,
           candidates: election.candidates.filter(candidate => candidate.id !== id)
         }))
       );
+      
       toast.success('Candidate removed successfully!');
     } catch (err) {
       setError('Failed to remove candidate');
@@ -406,27 +457,43 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  // Add voter if not exists
-  const addVoterIfNotExists = (user: { name: string; email: string }) => {
-    try {
-      const existingVoter = voters.find(voter => voter.email === user.email);
-      if (!existingVoter) {
-        const newVoter: Voter = {
-          id: Math.random().toString(36).substring(2, 9),
+  // Add voter if they don't already exist in the system
+  const addVoterIfNotExists = async (user: { name: string; email: string }) => {
+    // Check if the voter already exists
+    const existingVoter = voters.find(v => v.email === user.email);
+    
+    if (!existingVoter) {
+      try {
+        // If we're adding a user generically (not to a specific election)
+        // we'll use a special API endpoint or parameter to indicate this
+        await api.post('/admin/voters', user);
+        
+        // We don't need to call the regular addVoter method because
+        // this is a special case where we're just registering a user in the system
+        // without associating them with a specific election
+        
+        // Update the local state
+        const newVoterId = crypto.randomUUID();
+        const newVoter = {
+          id: newVoterId,
           name: user.name,
           email: user.email,
           hasVoted: false
         };
+        
         setVoters(prev => [...prev, newVoter]);
+      } catch (err) {
+        console.error('Error adding voter to system:', err);
+        // We don't show an error toast here as this is a background operation
       }
-    } catch (err) {
-      console.error('Error adding voter from user:', err);
     }
   };
 
   // Update candidate
-  const updateCandidate = (electionId: string, candidateId: string, updated: Partial<Omit<Candidate, 'id' | 'votes'>>) => {
+  const updateCandidate = async (electionId: string, candidateId: string, updated: Partial<Omit<Candidate, 'id' | 'votes'>>) => {
     try {
+      await api.put(`/admin/elections/${electionId}/candidates/${candidateId}`, updated);
+      
       setElections(prev => 
         prev.map(election => {
           if (election.id === electionId) {
@@ -443,11 +510,83 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           return election;
         })
       );
+      
       toast.success('Candidate updated successfully!');
     } catch (err) {
       setError('Failed to update candidate');
       console.error('Error updating candidate:', err);
       toast.error('Failed to update candidate');
+    }
+  };
+
+  // Clear all data
+  const clearAllData = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Call the API to clear all elections
+      await api.delete('/admin/elections/all');
+      
+      // Clear local state
+      setElections([]);
+      setVoters([]);
+      
+      toast.success('All data cleared successfully!');
+    } catch (err) {
+      setError('Failed to clear all data');
+      console.error('Error clearing all data:', err);
+      toast.error('Failed to clear all data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Update an existing election
+  const updateElection = async (id: string, updates: { title?: string; description?: string; startDate?: Date; endDate?: Date }) => {
+    try {
+      setIsLoading(true);
+      
+      // Get the current election
+      const currentElection = getElection(id);
+      if (!currentElection) {
+        throw new Error('Election not found');
+      }
+      
+      // Prepare the updated election data
+      const updatedElection = {
+        ...currentElection,
+        ...updates,
+        // Recalculate status if dates were changed
+        status: updates.startDate || updates.endDate 
+          ? determineStatus(
+              updates.startDate || currentElection.startDate,
+              updates.endDate || currentElection.endDate
+            )
+          : currentElection.status
+      };
+      
+      // Send to API
+      await api.put(`/admin/elections/${id}`, {
+        title: updatedElection.title,
+        description: updatedElection.description,
+        startDate: updatedElection.startDate,
+        endDate: updatedElection.endDate,
+        status: updatedElection.status
+      });
+      
+      // Update local state
+      setElections(prev => prev.map(election => 
+        election.id === id ? updatedElection : election
+      ));
+      
+      toast.success('Election updated successfully!');
+    } catch (err) {
+      setError('Failed to update election');
+      console.error('Error updating election:', err);
+      toast.error('Failed to update election');
+      throw err;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -471,7 +610,12 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       updateCandidate,
       isLoading,
       error,
-      refreshElections
+      refreshElections,
+      clearAllData,
+      updateElectionStatuses,
+      getVotersForElection,
+      refreshVotersList,
+      updateElection
     }}>
       {children}
     </ElectionContext.Provider>

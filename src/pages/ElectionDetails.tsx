@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   Calendar, Clock, Users, ArrowLeft, User, 
-  Vote, BarChart2, Printer, Download, Share2 
+  Vote, BarChart2, Printer, Download, Share2, Edit, UserPlus, StopCircle 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,11 +12,12 @@ import Layout from '@/components/Layout';
 import { useElection } from '@/contexts/ElectionContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Progress } from '@/components/ui/progress';
+import { toast } from 'sonner';
 
 const ElectionDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getElection } = useElection();
+  const { getElection, stopPolling } = useElection();
   const { user } = useAuth();
   
   const election = getElection(id || '');
@@ -49,6 +49,18 @@ const ElectionDetails: React.FC = () => {
         return 'bg-gray-500';
       default:
         return 'bg-blue-500';
+    }
+  };
+  
+  const isAdmin = user?.role === 'admin';
+  
+  const handleCompleteElection = async () => {
+    try {
+      await stopPolling(election.id);
+      toast.success('Election has been completed successfully');
+    } catch (error) {
+      console.error('Error completing election:', error);
+      toast.error('Failed to complete election');
     }
   };
   
@@ -236,37 +248,49 @@ const ElectionDetails: React.FC = () => {
       )}
       
       {/* Admin Actions */}
-      {user?.role === 'admin' && (
-        <>
-          <h2 className="text-2xl font-semibold font-heading mt-8 mb-4">Admin Actions</h2>
-          <div className="flex flex-wrap gap-4 mb-8">
-            <Button variant="outline" onClick={() => navigate(`/elections/${election.id}/edit`)}>
+      {isAdmin && (
+        <div className="mb-8 space-y-4">
+          <h2 className="text-xl font-semibold text-zinc-800">Admin Actions</h2>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2" 
+              onClick={() => navigate(`/elections/${election.id}/edit`)}
+            >
+              <Edit className="w-4 h-4" />
               Edit Election
             </Button>
-            <Button variant="outline" onClick={() => navigate(`/elections/${election.id}/candidates/add`)}>
+            
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2" 
+              onClick={() => navigate(`/elections/${election.id}/add-candidate`)}
+            >
+              <UserPlus className="w-4 h-4" />
               Add Candidate
             </Button>
-            <Button variant="outline" onClick={() => navigate(`/elections/${election.id}/voters`)}>
+            
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2" 
+              onClick={() => navigate(`/elections/${election.id}/manage-voters`)}
+            >
+              <Users className="w-4 h-4" />
               Manage Voters
             </Button>
-            {election.status !== 'upcoming' && (
-              <>
-                <Button variant="outline">
-                  <Printer className="mr-2 h-4 w-4" />
-                  Print Results
-                </Button>
-                <Button variant="outline">
-                  <Download className="mr-2 h-4 w-4" />
-                  Export Data
-                </Button>
-                <Button variant="outline">
-                  <Share2 className="mr-2 h-4 w-4" />
-                  Share Results
-                </Button>
-              </>
+            
+            {election.status !== 'completed' && (
+              <Button 
+                variant="outline" 
+                className="flex items-center gap-2 text-red-500 hover:text-red-700 hover:bg-red-50" 
+                onClick={handleCompleteElection}
+              >
+                <StopCircle className="w-4 h-4" />
+                End Election
+              </Button>
             )}
           </div>
-        </>
+        </div>
       )}
     </Layout>
   );

@@ -13,38 +13,44 @@ const AllResults: React.FC = () => {
   const { completedElections } = useElection();
 
   // Create some example completed elections if none exist in context
-  const resultsToShow = completedElections.length > 0 ? completedElections : [
-    {
-      id: '1',
-      title: 'Student Council Election 2024',
-      description: 'Annual election for student council positions.',
-      status: 'completed',
-      startDate: new Date('2024-04-10'),
-      endDate: new Date('2024-04-15'),
-      totalVotes: 254,
-      voterCount: 350,
-      candidates: [
-        { id: 'c1', name: 'John Doe', position: 'President', votes: 102 },
-        { id: 'c2', name: 'Jane Smith', position: 'Vice President', votes: 85 },
-        { id: 'c3', name: 'Robert Johnson', position: 'Treasurer', votes: 67 }
-      ]
-    },
-    {
-      id: '2',
-      title: 'Faculty Board Selection',
-      description: 'Selection process for the new faculty board members.',
-      status: 'completed',
-      startDate: new Date('2024-03-20'),
-      endDate: new Date('2024-03-25'),
-      totalVotes: 156,
-      voterCount: 185,
-      candidates: [
-        { id: 'c4', name: 'Emily Richards', position: 'Chair', votes: 78 },
-        { id: 'c5', name: 'Michael Stevens', position: 'Co-Chair', votes: 48 },
-        { id: 'c6', name: 'Sarah Williams', position: 'Secretary', votes: 30 }
-      ]
-    }
-  ];
+  const resultsToShow = completedElections.length > 0 
+    ? completedElections.map(election => ({
+        ...election,
+        // Ensure candidates is always an array
+        candidates: Array.isArray(election.candidates) ? election.candidates : []
+      }))
+    : [
+      {
+        id: '1',
+        title: 'Student Council Election 2024',
+        description: 'Annual election for student council positions.',
+        status: 'completed',
+        startDate: new Date('2024-04-10'),
+        endDate: new Date('2024-04-15'),
+        totalVotes: 254,
+        voterCount: 350,
+        candidates: [
+          { id: 'c1', name: 'John Doe', position: 'President', votes: 102 },
+          { id: 'c2', name: 'Jane Smith', position: 'Vice President', votes: 85 },
+          { id: 'c3', name: 'Robert Johnson', position: 'Treasurer', votes: 67 }
+        ]
+      },
+      {
+        id: '2',
+        title: 'Faculty Board Selection',
+        description: 'Selection process for the new faculty board members.',
+        status: 'completed',
+        startDate: new Date('2024-03-20'),
+        endDate: new Date('2024-03-25'),
+        totalVotes: 156,
+        voterCount: 185,
+        candidates: [
+          { id: 'c4', name: 'Emily Richards', position: 'Chair', votes: 78 },
+          { id: 'c5', name: 'Michael Stevens', position: 'Co-Chair', votes: 48 },
+          { id: 'c6', name: 'Sarah Williams', position: 'Secretary', votes: 30 }
+        ]
+      }
+    ];
 
   return (
     <Layout>

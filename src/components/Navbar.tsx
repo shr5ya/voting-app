@@ -121,19 +121,19 @@ const Navbar: React.FC = () => {
                       Voters
                     </span>
                   </Link>
-                  <a 
-                    href="http://localhost:8080/admin/dashboard" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
+                  <Link 
+                    to="/admin/dashboard"
                     className={`px-3 py-2 rounded-lg transition-all duration-200 ${
-                      'hover:bg-white/50 dark:hover:bg-white/5 hover:shadow-sm'
+                      isActive('/admin')
+                        ? 'bg-primary/15 dark:bg-primary/20 text-primary font-medium shadow-sm' 
+                        : 'hover:bg-white/50 dark:hover:bg-white/5 hover:shadow-sm'
                     }`}
                   >
                     <span className="flex items-center gap-1.5">
                       <ShieldAlert className="h-4 w-4" />
                       Admin Panel
                     </span>
-                  </a>
+                  </Link>
                 </>
               )}
               <Link 
@@ -324,17 +324,19 @@ const Navbar: React.FC = () => {
                         Voters
                       </span>
                     </Link>
-                    <a 
-                      href="http://localhost:8080/admin/dashboard" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="px-4 py-3 rounded-lg transition-all duration-200 hover:bg-white/50 dark:hover:bg-white/5 hover:shadow-sm"
+                    <Link 
+                      to="/admin/dashboard"
+                      className={`px-4 py-3 rounded-lg transition-all duration-200 ${
+                        isActive('/admin')
+                          ? 'bg-primary/15 dark:bg-primary/20 text-primary font-medium shadow-sm' 
+                          : 'hover:bg-white/50 dark:hover:bg-white/5 hover:shadow-sm'
+                      }`}
                     >
                       <span className="flex items-center gap-3">
                         <ShieldAlert className="h-5 w-5" />
                         Admin Panel
                       </span>
-                    </a>
+                    </Link>
                   </>
                 )}
                 <Link 

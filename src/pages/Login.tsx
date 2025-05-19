@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import axios from 'axios';
 
 // Define the form schema for admin login
 const adminLoginSchema = z.object({
@@ -59,8 +60,8 @@ const Login: React.FC = () => {
   const adminForm = useForm<AdminLoginFormValues>({
     resolver: zodResolver(adminLoginSchema),
     defaultValues: {
-      email: '',
-      password: '',
+      email: 'admin@example.com',
+      password: 'admin123',
     },
   });
 
@@ -77,10 +78,20 @@ const Login: React.FC = () => {
   const onAdminSubmit = async (values: AdminLoginFormValues) => {
     setIsSubmitting(true);
     try {
+      console.log('Submitting admin login with:', values);
       await login(values.email, values.password);
+      console.log('Login successful, navigating to dashboard');
       navigate('/dashboard');
     } catch (error) {
       console.error('Login failed:', error);
+      
+      if (axios.isAxiosError(error)) {
+        console.error('Axios error details:', {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }

@@ -1,5 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import axios from 'axios';
+
+// Define the API base URL
+const API_URL = 'http://localhost:5002/api/v1';
 
 // Define the shape of our user object
 interface User {
@@ -7,6 +11,8 @@ interface User {
   name: string;
   email: string;
   role: 'admin' | 'voter';
+  token?: string;
+  profileImage?: string;
 }
 
 // Define the shape of our auth context
@@ -17,6 +23,7 @@ interface AuthContextType {
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
+  updateProfile: (updates: { name?: string; profileImage?: string }) => Promise<void>;
 }
 
 // Interface for voter info passing to parent component
@@ -39,36 +46,35 @@ const AuthContext = createContext<AuthContextType>({
   login: async () => {},
   register: async () => {},
   logout: () => {},
-  isAuthenticated: false
+  isAuthenticated: false,
+  updateProfile: async () => {}
 });
 
 // Custom hook to use the auth context
 export const useAuth = () => useContext(AuthContext);
 
-// In a real app, these would connect to your backend
-const mockLogin = async (email: string, password: string): Promise<User> => {
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  // Allow any user to log in for demo mode
-  return {
-    id: Math.random().toString(36).substring(2, 9),
-    name: email.split('@')[0] || 'Demo User',
-    email,
-    role: email === 'admin@electra.com' ? 'admin' : 'voter',
-  };
-};
+// Create axios instance with default config
+const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
 
-const mockRegister = async (name: string, email: string, password: string): Promise<User> => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // In a real app, this would validate and create a new user on the server
-  return {
-    id: Math.random().toString(36).substring(2, 9),
-    name,
-    email,
-    role: 'voter' as const
-  };
-};
+// Add request interceptor to include auth token
+api.interceptors.request.use(
+  (config) => {
+    const userJson = localStorage.getItem('electra-user');
+    if (userJson) {
+      const user = JSON.parse(userJson);
+      if (user.token) {
+        config.headers.Authorization = `Bearer ${user.token}`;
+      }
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children, onUserLogin, onUserRegister }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -95,25 +101,47 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, onUserLogi
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      const user = await mockLogin(email, password);
-      setUser(user);
-      localStorage.setItem('electra-user', JSON.stringify(user));
+      console.log('Attempting login with:', { email, password });
+      const response = await api.post('/auth/login', { email, password });
       
-      // Notify parent component if this is a voter
-      if (user.role === 'voter' && onUserLogin) {
-        onUserLogin({
-          name: user.name,
-          email: user.email
+      if (response.data && response.data.token) {
+        // Format user object from API response
+        const userData: User = {
+          id: response.data.user.id,
+          name: response.data.user.name,
+          email: response.data.user.email,
+          role: response.data.user.role,
+          token: response.data.token
+        };
+        
+        setUser(userData);
+        localStorage.setItem('electra-user', JSON.stringify(userData));
+        
+        // Notify parent component if this is a voter
+        if (userData.role === 'voter' && onUserLogin) {
+          onUserLogin({
+            name: userData.name,
+            email: userData.email
+          });
+        }
+        
+        toast.success("Login successful!", {
+          description: `Welcome back, ${userData.name}!`,
         });
+      } else {
+        throw new Error('Invalid response from server');
+      }
+    } catch (error) {
+      let errorMessage = "An unexpected error occurred";
+      
+      if (axios.isAxiosError(error)) {
+        errorMessage = error.response?.data?.message || "Login failed";
+        console.error('Login error details:', error.response?.data);
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
       }
       
-      toast.success("Login successful!", {
-        description: `Welcome back, ${user.name}!`,
-      });
-    } catch (error) {
-      toast.error("Login failed", { 
-        description: error instanceof Error ? error.message : "Unknown error" 
-      });
+      toast.error("Login failed", { description: errorMessage });
       throw error;
     } finally {
       setIsLoading(false);
@@ -123,25 +151,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, onUserLogi
   const register = async (name: string, email: string, password: string) => {
     setIsLoading(true);
     try {
-      const user = await mockRegister(name, email, password);
-      setUser(user);
-      localStorage.setItem('electra-user', JSON.stringify(user));
+      const response = await api.post('/auth/register', { name, email, password });
       
-      // Notify parent component if this is a voter
-      if (user.role === 'voter' && onUserRegister) {
-        onUserRegister({
-          name: user.name,
-          email: user.email
+      if (response.data && response.data.user) {
+        // In a real implementation, you might need to login immediately after registration
+        // or the server might return a token directly
+        
+        // For now, we'll just set the user info and then require login
+        toast.success("Registration successful!", {
+          description: `Welcome to Electra, ${response.data.user.name}! Please login with your credentials.`,
         });
+        
+        // Notify parent component if this is a voter
+        if (response.data.user.role === 'voter' && onUserRegister) {
+          onUserRegister({
+            name: response.data.user.name,
+            email: response.data.user.email
+          });
+        }
+      } else {
+        throw new Error('Invalid response from server');
+      }
+    } catch (error) {
+      let errorMessage = "An unexpected error occurred";
+      
+      if (axios.isAxiosError(error)) {
+        errorMessage = error.response?.data?.message || "Registration failed";
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
       }
       
-      toast.success("Registration successful!", {
-        description: `Welcome to Electra, ${user.name}!`,
-      });
-    } catch (error) {
-      toast.error("Registration failed", { 
-        description: error instanceof Error ? error.message : "Unknown error" 
-      });
+      toast.error("Registration failed", { description: errorMessage });
       throw error;
     } finally {
       setIsLoading(false);
@@ -154,6 +194,43 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, onUserLogi
     toast.success("You've been logged out");
   };
 
+  const updateProfile = async (updates: { name?: string; profileImage?: string }) => {
+    setIsLoading(true);
+    try {
+      if (!user) {
+        throw new Error('No authenticated user');
+      }
+
+      // In a real app, you would send this to your API
+      // const response = await api.put('/auth/profile', updates);
+      
+      // For this demo, we'll just update it locally
+      const updatedUser = {
+        ...user,
+        ...updates
+      };
+      
+      setUser(updatedUser);
+      localStorage.setItem('electra-user', JSON.stringify(updatedUser));
+      
+      toast.success("Profile updated successfully!");
+      return updatedUser;
+    } catch (error) {
+      let errorMessage = "An unexpected error occurred";
+      
+      if (axios.isAxiosError(error)) {
+        errorMessage = error.response?.data?.message || "Profile update failed";
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      toast.error("Profile update failed", { description: errorMessage });
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <AuthContext.Provider value={{ 
       user, 
@@ -161,7 +238,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, onUserLogi
       login, 
       register, 
       logout,
-      isAuthenticated: !!user
+      isAuthenticated: !!user,
+      updateProfile
     }}>
       {children}
     </AuthContext.Provider>

@@ -8,6 +8,44 @@ const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'electra-secret-key';
 const TOKEN_EXPIRY = '24h';
 
+// In-memory store for registered users (would be a database in production)
+interface RegisteredUser {
+  id: string;
+  name: string;
+  email: string;
+  password: string;
+  role: UserRole;
+  createdAt: Date;
+  updatedAt: Date;
+  isActive: boolean;
+  registrationVerified?: boolean;
+  voterId?: string;
+}
+
+const registeredUsers: RegisteredUser[] = [
+  {
+    id: 'admin-user-id',
+    name: 'Admin User',
+    email: 'admin@example.com',
+    password: 'admin123',
+    role: UserRole.ADMIN,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    isActive: true
+  },
+  {
+    id: 'voter-user-id',
+    name: 'John Voter',
+    email: 'voter@example.com',
+    password: 'voter123',
+    role: UserRole.VOTER,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    isActive: true,
+    voterId: 'V12345'
+  }
+];
+
 /**
  * @route   POST /api/auth/login
  * @desc    Login as admin or regular user
@@ -22,51 +60,23 @@ router.post('/login', (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    // In a real implementation, verify credentials from database
-    // Mock admin login for demo
-    if (email === 'admin@example.com' && password === 'admin123') {
+    // Find user in our registered users
+    const user = registeredUsers.find(u => u.email === email && u.password === password);
+    
+    if (user) {
       const token = jwt.sign(
-        { id: 'admin-user-id', email, role: UserRole.ADMIN },
+        { id: user.id, email: user.email, role: user.role },
         JWT_SECRET,
         { expiresIn: TOKEN_EXPIRY }
       );
 
-      return res.json({
-        token,
-        expiresIn: 24 * 60 * 60, // 24 hours in seconds
-        user: {
-          id: 'admin-user-id',
-          name: 'Admin User',
-          email: 'admin@example.com',
-          role: UserRole.ADMIN,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          isActive: true
-        }
-      });
-    }
-
-    // Mock voter login
-    if (email === 'voter@example.com' && password === 'voter123') {
-      const token = jwt.sign(
-        { id: 'voter-user-id', email, role: UserRole.VOTER },
-        JWT_SECRET,
-        { expiresIn: TOKEN_EXPIRY }
-      );
+      // Create a user response object without the password
+      const { password: _, ...userResponse } = user;
 
       return res.json({
         token,
         expiresIn: 24 * 60 * 60, // 24 hours in seconds
-        user: {
-          id: 'voter-user-id',
-          name: 'John Voter',
-          email: 'voter@example.com',
-          role: UserRole.VOTER,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          isActive: true,
-          voterId: 'V12345'
-        }
+        user: userResponse
       });
     }
 
@@ -90,21 +100,34 @@ router.post('/register', (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Name, email, and password are required' });
     }
 
-    // In a real implementation, check if user already exists and save to database
+    // Check if user already exists
+    if (registeredUsers.some(user => user.email === email)) {
+      return res.status(400).json({ message: 'User with this email already exists' });
+    }
+    
+    // Create new user
+    const newUser: RegisteredUser = {
+      id: `user-${Math.random().toString(36).substring(2, 9)}`,
+      name,
+      email,
+      password,
+      role: UserRole.VOTER,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isActive: true,
+      registrationVerified: false
+    };
+    
+    // Add to our in-memory store
+    registeredUsers.push(newUser);
+    
+    // Create a user response object without the password
+    const { password: _, ...userResponse } = newUser;
     
     // For demo, return success
     return res.status(201).json({
       message: 'User registered successfully',
-      user: {
-        id: `user-${Math.random().toString(36).substring(2, 9)}`,
-        name,
-        email,
-        role: UserRole.VOTER,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        isActive: true,
-        registrationVerified: false
-      }
+      user: userResponse
     });
   } catch (error) {
     return res.status(500).json({ message: 'Server error', error });
@@ -225,6 +248,24 @@ router.post('/reset-password/:token', (req: Request, res: Response) => {
   } catch (error) {
     return res.status(500).json({ message: 'Server error', error });
   }
+});
+
+/**
+ * @route   GET /api/auth/debug/users
+ * @desc    Get all registered users (for debugging only, would not exist in production)
+ * @access  Public
+ */
+router.get('/debug/users', (_req: Request, res: Response) => {
+  // Create a safe list of users without passwords
+  const safeUsers = registeredUsers.map(user => {
+    const { password, ...safeUser } = user;
+    return safeUser;
+  });
+  
+  return res.json({
+    message: 'Registered users',
+    users: safeUsers
+  });
 });
 
 export default router; 

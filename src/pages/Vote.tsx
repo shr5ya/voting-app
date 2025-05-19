@@ -1,10 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, CSSProperties } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useElection } from '@/contexts/ElectionContext';
 import { useAuth } from '@/contexts/AuthContext';
 
-const ElectionVote = () => {
+interface Candidate {
+  id: string;
+  name: string;
+  position: string;
+}
+
+interface Election {
+  id: string;
+  title: string;
+  description: string;
+  candidates: Candidate[];
+}
+
+const ElectionVote: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -13,30 +26,29 @@ const ElectionVote = () => {
   const [selectedCandidate, setSelectedCandidate] = useState('');
   const [loading, setLoading] = useState(false);
   const [voted, setVoted] = useState(false);
-  const [election, setElection] = useState(null);
+  const [election, setElection] = useState<Election | null>(null);
   const [error, setError] = useState('');
   
   useEffect(() => {
     if (id) {
       const electionData = getElection(id);
       if (electionData) {
-        setElection(electionData);
+        setElection(electionData as unknown as Election);
       } else {
         setError('Election not found');
       }
     }
   }, [id, getElection]);
   
-  const handleVote = () => {
+  const handleVote = async () => {
     if (!selectedCandidate || !user || !election) return;
     
     setLoading(true);
     
-    // Use the actual castVote function from context
     try {
-      const success = castVote(election.id, selectedCandidate, user.id);
+      const success = await castVote(election.id, selectedCandidate, user.id);
       
-    setTimeout(() => {
+      setTimeout(() => {
         setLoading(false);
         if (success) {
           setVoted(true);
@@ -57,10 +69,10 @@ const ElectionVote = () => {
       minHeight: '100vh',
       padding: '2rem 1rem',
       display: 'flex',
-      flexDirection: 'column',
+      flexDirection: 'column' as 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      position: 'relative',
+      position: 'relative' as 'relative',
       overflow: 'hidden'
     },
     card: {
@@ -76,12 +88,12 @@ const ElectionVote = () => {
       backgroundColor: '#123458',
       padding: '1.5rem',
       color: 'white',
-      textAlign: 'center'
+      textAlign: 'center' as 'center'
     },
     content: {
       padding: '1.5rem'
     },
-    candidateBox: (isSelected) => ({
+    candidateBox: (isSelected: boolean): CSSProperties => ({
       display: 'flex',
       alignItems: 'center',
       gap: '0.75rem',
@@ -115,11 +127,11 @@ const ElectionVote = () => {
       fontWeight: 'bold',
       fontSize: '1.5rem',
       marginBottom: '0.5rem',
-      textAlign: 'center'
+      textAlign: 'center' as 'center'
     },
     subtitle: {
       color: '#123458',
-      textAlign: 'center',
+      textAlign: 'center' as 'center',
       fontStyle: 'italic',
       marginBottom: '2rem'
     },
@@ -127,10 +139,10 @@ const ElectionVote = () => {
       color: '#030303',
       fontSize: '0.75rem',
       marginTop: '1.5rem',
-      textAlign: 'center',
+      textAlign: 'center' as 'center',
       opacity: '0.7'
     },
-    radioOuter: (isSelected) => ({
+    radioOuter: (isSelected: boolean): CSSProperties => ({
       width: '1.25rem',
       height: '1.25rem',
       borderRadius: '50%',
@@ -162,7 +174,7 @@ const ElectionVote = () => {
     },
     errorMessage: {
       color: '#e53e3e',
-      textAlign: 'center',
+      textAlign: 'center' as 'center',
       margin: '1rem 0',
       fontWeight: '500'
     }
@@ -174,7 +186,7 @@ const ElectionVote = () => {
       <div style={styles.container}>
         <div style={styles.card}>
           <div style={styles.content}>
-            <div style={{textAlign: 'center', padding: '1rem 0'}}>
+            <div style={{textAlign: 'center' as 'center', padding: '1rem 0'}}>
               <div style={{width: '2rem', height: '2rem', borderRadius: '50%', border: '3px solid #123458', borderTopColor: 'transparent', animation: 'spin 1s linear infinite', margin: '0 auto 1rem auto'}}></div>
               <p>Loading election data...</p>
             </div>
@@ -190,7 +202,7 @@ const ElectionVote = () => {
       <div style={styles.container}>
         <div style={styles.card}>
           <div style={styles.content}>
-            <div style={{textAlign: 'center', padding: '1rem 0'}}>
+            <div style={{textAlign: 'center' as 'center', padding: '1rem 0'}}>
               <svg style={{...styles.successIcon, color: '#e53e3e'}} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
               </svg>
@@ -229,7 +241,7 @@ const ElectionVote = () => {
         
         <div style={styles.content}>
           {voted ? (
-            <div style={{textAlign: 'center', padding: '1rem 0'}}>
+            <div style={{textAlign: 'center' as 'center', padding: '1rem 0'}}>
               <svg style={styles.successIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
@@ -283,7 +295,7 @@ const ElectionVote = () => {
               </button>
               
               {selectedCandidate && (
-                <div style={{textAlign: 'center', fontSize: '0.875rem', marginTop: '0.75rem', color: '#123458'}}>
+                <div style={{textAlign: 'center' as 'center', fontSize: '0.875rem', marginTop: '0.75rem', color: '#123458'}}>
                   You're voting for: <span style={{fontWeight: '600'}}>{election.candidates.find(c => c.id === selectedCandidate)?.name}</span>
                 </div>
               )}

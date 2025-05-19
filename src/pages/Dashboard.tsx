@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PlusCircle, CalendarCheck, Clock, CheckCircle, User, Vote, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,29 @@ import AdminActionBar from '@/components/AdminActionBar';
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { activeElections, upcomingElections, completedElections } = useElection();
+  const { 
+    activeElections, 
+    upcomingElections, 
+    completedElections, 
+    refreshElections, 
+    updateElectionStatuses,
+    isLoading
+  } = useElection();
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+  
+  // Load elections data only once when the dashboard mounts
+  useEffect(() => {
+    if (!initialLoadComplete) {
+      const loadData = async () => {
+        await refreshElections();
+        // Only update status after initial load
+        updateElectionStatuses();
+        setInitialLoadComplete(true);
+      };
+      
+      loadData();
+    }
+  }, [refreshElections, updateElectionStatuses, initialLoadComplete]);
   
   // Sample data for the chart
   const chartData = [
