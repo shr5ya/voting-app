@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Electra - Modern Voting System</title>
+    <meta name="description" content="Secure, transparent, and accessible voting system for organizations of all sizes." />
+    <meta name="author" content="Electra" />
+
+    <meta property="og:title" content="Electra - Modern Voting System" />
+    <meta property="og:description" content="Secure, transparent, and accessible voting system for organizations of all sizes." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@electra_voting" />
+    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    
+    <!-- Theme colors for browsers -->
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0A1929" media="(prefers-color-scheme: dark)">
+    
+    <!-- Resource hints for faster loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Preload critical font weights -->
+    <link 
+      href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600&display=swap" 
+      rel="preload" 
+      as="style" 
+      onload="this.onload=null;this.rel='stylesheet'"
+    >
+
+    <!-- Non-blocking font loading with fallback -->
+    <link 
+      href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@300;400;500;600;700&display=swap" 
+      rel="stylesheet" 
+      media="print" 
+      onload="this.media='all'"
+    >
+    
+    <!-- Fallback for non-JS browsers -->
+    <noscript>
+      <link 
+        href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@300;400;500;600;700&display=swap" 
+        rel="stylesheet"
+      >
+    </noscript>
+    
+    <!-- Font display strategy -->
+    <style>
+      @font-face {
+        font-family: 'Libre Franklin';
+        font-style: normal;
+        font-weight: 300;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'Libre Franklin';
+        font-style: normal;
+        font-weight: 400;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'Libre Franklin';
+        font-style: normal;
+        font-weight: 500;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'Libre Franklin';
+        font-style: normal;
+        font-weight: 600;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'Libre Franklin';
+        font-style: normal;
+        font-weight: 700;
+        font-display: swap;
+      }
+    </style>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
+    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,402 @@
+@import url('https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light theme (default) - Updated with new colors */
+    --background: 60 6% 94%;      /* #F1EFEC */
+    --foreground: 210 65% 21%;    /* #123458 */
+
+    --card: 60 6% 94%;            /* #F1EFEC */
+    --card-foreground: 210 65% 21%; /* #123458 */
+
+    --popover: 60 6% 94%;         /* #F1EFEC */
+    --popover-foreground: 210 65% 21%; /* #123458 */
+
+    --primary: 210 65% 21%;       /* #123458 */
+    --primary-foreground: 60 6% 94%; /* #F1EFEC */
+
+    --secondary: 34 16% 79%;      /* #D4C9BE */
+    --secondary-foreground: 210 65% 21%; /* #123458 */
+
+    --muted: 34 16% 79%;          /* #D4C9BE */
+    --muted-foreground: 0 0% 1%;  /* #030303 */
+
+    --accent: 210 65% 21%;        /* #123458 */
+    --accent-foreground: 60 6% 94%; /* #F1EFEC */
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 60 6% 94%; /* #F1EFEC */
+
+    --border: 34 16% 79%;         /* #D4C9BE */
+    --input: 34 16% 79%;          /* #D4C9BE */
+    --ring: 210 65% 21%;          /* #123458 */
+
+    --radius: 0.5rem;
+
+    /* Sidebar specific colors - light mode */
+    --sidebar-background: 34 16% 79%;  /* #D4C9BE */
+    --sidebar-foreground: 210 65% 21%; /* #123458 */
+    --sidebar-primary: 210 65% 21%;    /* #123458 */
+    --sidebar-primary-foreground: 60 6% 94%; /* #F1EFEC */
+    --sidebar-accent: 34 16% 79%;      /* #D4C9BE */
+    --sidebar-accent-foreground: 0 0% 1%; /* #030303 */
+    --sidebar-border: 34 16% 79%;      /* #D4C9BE */
+    --sidebar-ring: 210 65% 21%;       /* #123458 */
+  }
+
+  .dark {
+    /* Dark theme - updated with new colors */
+    --background: 0 0% 1%;          /* #030303 */
+    --foreground: 60 6% 94%;        /* #F1EFEC */
+
+    --card: 210 65% 21%;            /* #123458 */
+    --card-foreground: 60 6% 94%;   /* #F1EFEC */
+
+    --popover: 210 65% 21%;         /* #123458 */
+    --popover-foreground: 60 6% 94%; /* #F1EFEC */
+
+    --primary: 60 6% 94%;           /* #F1EFEC */
+    --primary-foreground: 210 65% 21%; /* #123458 */
+
+    --secondary: 210 65% 30%;       /* Slightly lighter than #123458 */
+    --secondary-foreground: 60 6% 94%; /* #F1EFEC */
+
+    --muted: 0 0% 10%;              /* Slightly lighter than #030303 */
+    --muted-foreground: 34 16% 79%; /* #D4C9BE */
+
+    --accent: 34 16% 79%;           /* #D4C9BE */
+    --accent-foreground: 210 65% 21%; /* #123458 */
+
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 60 6% 94%; /* #F1EFEC */
+
+    --border: 210 65% 21%;          /* #123458 */
+    --input: 210 65% 21%;           /* #123458 */
+    --ring: 34 16% 79%;             /* #D4C9BE */
+    
+    /* Sidebar specific colors - dark mode */
+    --sidebar-background: 0 0% 5%;     /* Slightly lighter than #030303 */
+    --sidebar-foreground: 60 6% 94%;   /* #F1EFEC */
+    --sidebar-primary: 34 16% 79%;     /* #D4C9BE */
+    --sidebar-primary-foreground: 210 65% 21%; /* #123458 */
+    --sidebar-accent: 210 65% 21%;     /* #123458 */
+    --sidebar-accent-foreground: 60 6% 94%; /* #F1EFEC */
+    --sidebar-border: 0 0% 10%;        /* Slightly lighter than #030303 */
+    --sidebar-ring: 34 16% 79%;        /* #D4C9BE */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans transition-colors duration-300;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading font-medium tracking-tight;
+  }
+}
+
+@layer components {
+  /* Glassmorphism components */
+  .glass-card {
+    @apply bg-white/60 dark:bg-card/60 backdrop-blur-md border border-white/20 dark:border-white/5 
+           rounded-xl shadow-glass dark:shadow-glass-dark transition-all duration-300
+           hover:shadow-glass-hover dark:hover:shadow-glass-dark-hover;
+  }
+  
+  .glass-card-flat {
+    @apply bg-white/80 dark:bg-card/80 backdrop-blur-sm border border-white/40 dark:border-white/10 
+           rounded-xl shadow-sm transition-all duration-300;
+  }
+  
+  .glass-input {
+    @apply bg-white/40 dark:bg-muted/20 backdrop-blur-sm border border-white/30 dark:border-white/10 
+           rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200;
+  }
+  
+  .glass-button {
+    @apply bg-primary/90 hover:bg-primary text-white backdrop-blur-sm rounded-lg
+           shadow-md hover:shadow-lg transition-all duration-200;
+  }
+  
+  .glass-button-secondary {
+    @apply bg-secondary/80 hover:bg-secondary text-secondary-foreground backdrop-blur-sm rounded-lg
+           shadow-sm hover:shadow-md transition-all duration-200;
+  }
+  
+  .glass-panel {
+    @apply bg-white/30 dark:bg-card/30 backdrop-blur-lg border border-white/20 dark:border-white/5 
+           rounded-2xl shadow-glass dark:shadow-glass-dark;
+  }
+  
+  .glass-sidebar {
+    @apply bg-sidebar/70 dark:bg-sidebar/70 backdrop-blur-xl border-r border-sidebar-border/30 
+           dark:border-sidebar-border/20 shadow-glass-sm dark:shadow-glass-dark-sm;
+  }
+
+  /* Electra styled components */
+  .electra-card {
+    @apply bg-background/80 dark:bg-card/80 backdrop-blur-md border border-accent/30 
+           dark:border-white/5 rounded-xl shadow-glass dark:shadow-glass-dark 
+           hover:shadow-glass-hover dark:hover:shadow-glass-dark-hover transition-all duration-300
+           bg-gradient-subtle dark:bg-gradient-glass-dark;
+  }
+
+  .electra-button-primary {
+    @apply bg-primary text-white hover:bg-primary/90 rounded-lg shadow-md hover:shadow-lg 
+           transition-all duration-200 hover:translate-y-[-2px];
+  }
+
+  .electra-button-secondary {
+    @apply bg-accent hover:bg-accent/70 dark:bg-secondary dark:hover:bg-accent 
+           text-accent-foreground dark:text-secondary-foreground rounded-lg shadow-md hover:shadow-lg 
+           transition-all duration-200 hover:translate-y-[-2px];
+  }
+
+  .electra-input {
+    @apply bg-background/90 dark:bg-muted/20 backdrop-blur-sm border border-accent/50 
+           dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary
+           transition-all duration-200;
+  }
+  
+  .electra-card-active {
+    @apply relative overflow-hidden;
+  }
+  
+  .electra-card-active::before {
+    @apply content-[''] absolute -inset-0.5 rounded-xl bg-gradient-to-r from-primary/30 via-primary/5 to-primary/30
+           dark:from-primary/20 dark:via-background/10 dark:to-primary/20 blur opacity-75 
+           transition-all duration-1000 animate-pulse-soft;
+  }
+  
+  .electra-card-active::after {
+    @apply content-[''] absolute inset-0 rounded-xl bg-white/90 dark:bg-card/90 backdrop-blur-sm 
+           transition-all duration-300 border border-white/50 dark:border-white/10;
+  }
+  
+  .electra-card-active > * {
+    @apply relative z-10;
+  }
+  
+  .hover-scale {
+    @apply transition-transform duration-200 hover:scale-105;
+  }
+
+  .animate-float {
+    animation-name: float;
+    animation-duration: 3s;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+  }
+  
+  .animate-fade-in {
+    animation-name: fade-in;
+    animation-duration: 0.3s;
+    animation-timing-function: ease-out;
+  }
+  
+  .animate-slide-in-right {
+    animation-name: slide-in-right;
+    animation-duration: 0.4s;
+    animation-timing-function: ease-out;
+  }
+  
+  .animate-slide-in-left {
+    animation-name: slide-in-left;
+    animation-duration: 0.4s;
+    animation-timing-function: ease-out;
+  }
+  
+  .animate-slide-in-up {
+    animation-name: slide-in-up;
+    animation-duration: 0.4s;
+    animation-timing-function: ease-out;
+  }
+  
+  .animate-slide-in-down {
+    animation-name: slide-in-down;
+    animation-duration: 0.4s;
+    animation-timing-function: ease-out;
+  }
+  
+  .animate-pulse-soft {
+    animation: pulse-soft 3s ease-in-out infinite;
+  }
+  
+  .animate-scale-in-out {
+    animation: scale-in-out 3s ease-in-out infinite;
+  }
+  
+  .animate-count-up {
+    position: relative;
+    animation: count-up 2s ease-out forwards;
+    counter-reset: count 0;
+  }
+  
+  .animate-slide-up {
+    animation: slide-up 0.6s ease-out forwards;
+  }
+  
+  .animate-slide-up-delay-1 {
+    animation: slide-up 0.6s ease-out 0.1s forwards;
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  
+  .animate-slide-up-delay-2 {
+    animation: slide-up 0.6s ease-out 0.2s forwards;
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  
+  .animate-slide-up-delay-3 {
+    animation: slide-up 0.6s ease-out 0.3s forwards;
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  
+  .animate-slide-up-delay-4 {
+    animation: slide-up 0.6s ease-out 0.4s forwards;
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  
+  .animate-slide-up-delay-5 {
+    animation: slide-up 0.6s ease-out 0.5s forwards;
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  
+  .hover-float {
+    transition: transform 0.3s ease-out;
+  }
+  
+  .hover-float:hover {
+    transform: translateY(-5px);
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-8px);
+    }
+  }
+  
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes slide-in-right {
+    from {
+      opacity: 0;
+      transform: translateX(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  
+  @keyframes slide-in-left {
+    from {
+      opacity: 0;
+      transform: translateX(-100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  
+  @keyframes slide-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes slide-in-down {
+    from {
+      opacity: 0;
+      transform: translateY(-100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes pulse-soft {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+  }
+  
+  @keyframes scale-in-out {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+  }
+  
+  @keyframes slide-up {
+    0% {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes count-up {
+    0% {
+      content: "0";
+    }
+    100% {
+      content: attr(data-count);
+    }
+  }
+  
+  /* Add these for the shimmer effect */
+  @keyframes shimmer {
+    0% {
+      background-position: -500px 0;
+    }
+    100% {
+      background-position: 500px 0;
+    }
+  }
+}
+
+#root {
+  min-height: 100vh;
+}
