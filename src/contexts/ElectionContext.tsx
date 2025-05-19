@@ -54,132 +54,9 @@ interface ElectionContextType {
 }
 
 // Mock data
-const mockCandidates: Candidate[] = [
-  {
-    id: '1',
-    name: 'Jane Smith',
-    position: 'President',
-    bio: 'Experienced leader with a track record of success.',
-    imageUrl: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjN8fHByb2ZpbGV8ZW58MHx8MHx8fDA%3D',
-    votes: 25,
-  },
-  {
-    id: '2',
-    name: 'John Doe',
-    position: 'Vice President',
-    bio: 'Passionate about innovation and technology.',
-    imageUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTF8fHByb2ZpbGV8ZW58MHx8MHx8fDA%3D',
-    votes: 17,
-  },
-  {
-    id: '3',
-    name: 'Emily Johnson',
-    position: 'Secretary',
-    bio: 'Detail-oriented and efficient administrator.',
-    imageUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mzl8fHByb2ZpbGV8ZW58MHx8MHx8fDA%3D',
-    votes: 12,
-  },
-];
-
-const mockElections: Election[] = [
-  {
-    id: '1',
-    title: 'Student Council Election 2024',
-    description: 'Annual election for student council positions.',
-    startDate: new Date('2024-05-10'),
-    endDate: new Date('2024-05-25'),
-    status: 'active',
-    candidates: mockCandidates,
-    totalVotes: 54,
-    voterCount: 100,
-  },
-  {
-    id: '2',
-    title: 'Faculty Board Election',
-    description: 'Election for faculty board positions.',
-    startDate: new Date('2024-06-01'),
-    endDate: new Date('2024-06-15'),
-    status: 'upcoming',
-    candidates: [],
-    totalVotes: 0,
-    voterCount: 50,
-  },
-  {
-    id: '3',
-    title: 'Club President Election',
-    description: 'Election for the club president position.',
-    startDate: new Date('2024-04-01'),
-    endDate: new Date('2024-04-15'),
-    status: 'completed',
-    candidates: [
-      {
-        id: '4',
-        name: 'Michael Brown',
-        position: 'President',
-        bio: 'Dedicated to club growth and member engagement.',
-        imageUrl: 'https://images.unsplash.com/photo-1531891437562-4301cf35b7e4?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NDZ8fHByb2ZpbGV8ZW58MHx8MHx8fDA%3D',
-        votes: 32,
-      },
-      {
-        id: '5',
-        name: 'Sarah Wilson',
-        position: 'President',
-        bio: 'Focusing on innovation and inclusivity.',
-        imageUrl: 'https://images.unsplash.com/photo-1619895862022-09114b41f16f?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjJ8fHlvdW5nJTIwd29tYW58ZW58MHx8MHx8fDA%3D',
-        votes: 28,
-      },
-    ],
-    totalVotes: 60,
-    voterCount: 75,
-  },
-  {
-    id: '4',
-    title: 'Department Chair Election',
-    description: 'Election for the department chair position.',
-    startDate: new Date('2024-07-01'),
-    endDate: new Date('2024-07-15'),
-    status: 'upcoming',
-    candidates: [],
-    totalVotes: 0,
-    voterCount: 25,
-  },
-  {
-    id: '5',
-    title: 'Student Association Board',
-    description: 'Election for the student association board positions.',
-    startDate: new Date('2024-05-01'),
-    endDate: new Date('2024-05-08'),
-    status: 'completed',
-    candidates: [
-      {
-        id: '6',
-        name: 'David Lee',
-        position: 'Chair',
-        bio: 'Experienced in student leadership and community building.',
-        imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MzJ8fHByb2ZpbGV8ZW58MHx8MHx8fDA%3D',
-        votes: 42,
-      },
-      {
-        id: '7',
-        name: 'Anna Martinez',
-        position: 'Chair',
-        bio: 'Committed to improving student experience and campus life.',
-        imageUrl: 'https://images.unsplash.com/photo-1520810627419-35e362c5dc07?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NTF8fHByb2ZpbGV8ZW58MHx8MHx8fDA%3D',
-        votes: 38,
-      },
-    ],
-    totalVotes: 80,
-    voterCount: 100,
-  }
-];
-
-const mockVoters: Voter[] = [
-  { id: '1', name: 'Alice Johnson', email: 'alice@example.com', hasVoted: false },
-  { id: '2', name: 'Bob Smith', email: 'bob@example.com', hasVoted: true, electionId: '1' },
-  { id: '3', name: 'Carol White', email: 'carol@example.com', hasVoted: false },
-  { id: '4', name: 'David Brown', email: 'david@example.com', hasVoted: true, electionId: '3' },
-  { id: '5', name: 'Eva Martinez', email: 'eva@example.com', hasVoted: false },
-];
+const mockCandidates: Candidate[] = [];
+const mockElections: Election[] = [];
+const mockVoters: Voter[] = [];
 
 // Create the context
 const ElectionContext = createContext<ElectionContextType | undefined>(undefined);
@@ -199,15 +76,6 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [error, setError] = useState<string | null>(null);
   const [dataInitialized, setDataInitialized] = useState<boolean>(false);
 
-  // Process mock data to ensure dates are proper Date objects
-  const processMockData = (mockData: Election[]): Election[] => {
-    return mockData.map(election => ({
-      ...election,
-      startDate: new Date(election.startDate),
-      endDate: new Date(election.endDate),
-    }));
-  };
-
   // Initial data load
   useEffect(() => {
     const loadData = async () => {
@@ -215,45 +83,22 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setIsLoading(true);
         setError(null);
         
-        // Try to load from localStorage first
-        const storedElections = localStorage.getItem('elections');
+        // Clear all previous data from localStorage
+        localStorage.removeItem('elections');
+        localStorage.removeItem('voters');
         
-        if (storedElections) {
-          try {
-            const parsedElections = JSON.parse(storedElections);
-            // Convert string dates back to Date objects
-            const processedElections = parsedElections.map(election => ({
-              ...election,
-              startDate: new Date(election.startDate),
-              endDate: new Date(election.endDate),
-            }));
-            setElections(processedElections);
-          } catch (parseError) {
-            console.error('Error parsing stored elections:', parseError);
-            // Fall back to mock data if parse error
-            const processedElections = processMockData(mockElections);
-            setElections(processedElections);
-            localStorage.setItem('elections', JSON.stringify(processedElections));
-          }
-        } else {
-          // No localStorage data, use mock data
-        // Simulate API fetch with a delayed response
-        await new Promise(resolve => setTimeout(resolve, 600));
+        // Initialize with empty arrays
+        setElections([]);
+        setVoters([]);
         
-        // Convert dates from string to Date objects for mock data
-        const processedElections = processMockData(mockElections);
+        // Store empty arrays in localStorage
+        localStorage.setItem('elections', JSON.stringify([]));
+        localStorage.setItem('voters', JSON.stringify([]));
         
-        setElections(processedElections);
-          // Store mock data in localStorage
-          localStorage.setItem('elections', JSON.stringify(processedElections));
-        }
-        
-        setVoters(mockVoters);
         setDataInitialized(true);
       } catch (err) {
-        setError('Failed to load election data. Please try again later.');
-        console.error('Error loading election data:', err);
-        toast.error('Failed to load election data');
+        setError('Failed to initialize data');
+        console.error('Error initializing data:', err);
       } finally {
         setIsLoading(false);
       }
@@ -261,6 +106,20 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     
     loadData();
   }, []);
+
+  // Save elections to localStorage whenever they change
+  useEffect(() => {
+    if (dataInitialized) {
+      localStorage.setItem('elections', JSON.stringify(elections));
+    }
+  }, [elections, dataInitialized]);
+
+  // Save voters to localStorage whenever they change
+  useEffect(() => {
+    if (dataInitialized) {
+      localStorage.setItem('voters', JSON.stringify(voters));
+    }
+  }, [voters, dataInitialized]);
 
   // Refresh elections data
   const refreshElections = async () => {
@@ -421,10 +280,38 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Cast a vote
   const castVote = (electionId: string, candidateId: string, voterId: string): boolean => {
     try {
-      // Check if the voter has already voted
-      const voter = voters.find(v => v.id === voterId);
-      if (!voter || voter.hasVoted) {
-        toast.error('You have already voted in this election.');
+      // Check if the voter exists in our voters array
+      let voter = voters.find(v => v.id === voterId);
+      
+      // If voter doesn't exist in our system yet, add them
+      if (!voter) {
+        // Get user info from localStorage as a fallback (this assumes AuthContext saved user data)
+        const savedUserStr = localStorage.getItem('electra-user');
+        if (savedUserStr) {
+          const savedUser = JSON.parse(savedUserStr);
+          if (savedUser && savedUser.id === voterId) {
+            // Create a new voter entry
+            voter = {
+              id: voterId,
+              name: savedUser.name || 'Voter',
+              email: savedUser.email || '',
+              hasVoted: false
+            };
+            // Add to voters array
+            setVoters(prev => [...prev, voter]);
+          }
+        }
+      }
+      
+      // Now check if the voter exists and hasn't voted
+      if (!voter) {
+        toast.error('Voter not found in the system.');
+        return false;
+      }
+      
+      // Check if the voter has already voted in ANY election (not just this one)
+      if (voter.hasVoted) {
+        toast.error('You have already voted in an election.');
         return false;
       }
 
@@ -459,6 +346,12 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           return v;
         });
       });
+
+      // Save the updated elections and voters to localStorage
+      setTimeout(() => {
+        localStorage.setItem('elections', JSON.stringify(elections));
+        localStorage.setItem('voters', JSON.stringify(voters));
+      }, 100);
 
       toast.success('Vote cast successfully!');
       return true;

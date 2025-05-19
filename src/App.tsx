@@ -166,8 +166,15 @@ const AppRoutes = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
-      <AuthProvider>
-        <ElectionProvider>
+      <ElectionProvider>
+        <AuthProvider 
+          onUserLogin={(voter) => {
+            // This will be handled by VoterSync
+          }}
+          onUserRegister={(voter) => {
+            // This will be handled by VoterSync
+          }}
+        >
           <TooltipProvider>
             <Toaster />
             <Sonner />
@@ -176,8 +183,8 @@ const App = () => (
               <AppRoutes />
             </BrowserRouter>
           </TooltipProvider>
-        </ElectionProvider>
-      </AuthProvider>
+        </AuthProvider>
+      </ElectionProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );

@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
 import AdminActionBar from '@/components/AdminActionBar';
+import ClearDataButton from '@/components/ClearDataButton';
 
 const statusBadgeVariant: Record<string, string> = {
   active: 'primary',
@@ -151,9 +152,12 @@ const Elections: React.FC = () => {
     <Layout>
       <div className="min-h-screen mb-12">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2 font-heading">Elections</h1>
-          <p className="text-muted-foreground">Browse, search and participate in elections</p>
+        <div className="mb-6 flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold mb-2 font-heading">Elections</h1>
+            <p className="text-muted-foreground">Browse, search and participate in elections</p>
+          </div>
+          {user?.role === 'admin' && <ClearDataButton />}
         </div>
         
         {/* Admin Actions */}

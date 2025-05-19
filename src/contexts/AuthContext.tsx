@@ -19,6 +19,19 @@ interface AuthContextType {
   isAuthenticated: boolean;
 }
 
+// Interface for voter info passing to parent component
+export interface VoterInfo {
+  name: string;
+  email: string;
+}
+
+// Props for the AuthProvider
+interface AuthProviderProps {
+  children: React.ReactNode;
+  onUserLogin?: (voter: VoterInfo) => void; 
+  onUserRegister?: (voter: VoterInfo) => void;
+}
+
 // Create the context with a default value
 const AuthContext = createContext<AuthContextType>({
   user: null,
@@ -57,7 +70,7 @@ const mockRegister = async (name: string, email: string, password: string): Prom
   };
 };
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children, onUserLogin, onUserRegister }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -65,10 +78,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Check for saved user in localStorage
     const savedUser = localStorage.getItem('electra-user');
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      const parsedUser = JSON.parse(savedUser);
+      setUser(parsedUser);
+      
+      // Notify parent component about the user
+      if (onUserLogin && parsedUser.role === 'voter') {
+        onUserLogin({
+          name: parsedUser.name,
+          email: parsedUser.email
+        });
+      }
     }
     setIsLoading(false);
-  }, []);
+  }, [onUserLogin]);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
@@ -76,6 +98,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const user = await mockLogin(email, password);
       setUser(user);
       localStorage.setItem('electra-user', JSON.stringify(user));
+      
+      // Notify parent component if this is a voter
+      if (user.role === 'voter' && onUserLogin) {
+        onUserLogin({
+          name: user.name,
+          email: user.email
+        });
+      }
+      
       toast.success("Login successful!", {
         description: `Welcome back, ${user.name}!`,
       });
@@ -95,6 +126,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const user = await mockRegister(name, email, password);
       setUser(user);
       localStorage.setItem('electra-user', JSON.stringify(user));
+      
+      // Notify parent component if this is a voter
+      if (user.role === 'voter' && onUserRegister) {
+        onUserRegister({
+          name: user.name,
+          email: user.email
+        });
+      }
+      
       toast.success("Registration successful!", {
         description: `Welcome to Electra, ${user.name}!`,
       });
