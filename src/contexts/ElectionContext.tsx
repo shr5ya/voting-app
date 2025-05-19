@@ -45,7 +45,6 @@ export interface Election {
   candidates: Candidate[];
   totalVotes: number;
   voterCount: number;
-  electionImage?: string;
 }
 
 export interface Voter {
@@ -282,7 +281,6 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           description: election.description,
           startDate: election.startDate.toISOString(),
           endDate: election.endDate.toISOString(),
-          electionImage: election.electionImage || '',
           candidates: election.candidates,
           voterCount: election.voterCount || 0
         };
