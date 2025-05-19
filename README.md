@@ -1,92 +1,130 @@
-# MERN Online Voting System
+# Electra Voting System
 
-A comprehensive online voting system built with the MERN stack (MongoDB, Express.js, React.js, Node.js) for secure and efficient election management.
+A modern and secure online voting platform built with the MERN stack (MongoDB, Express.js, React.js, Node.js). Electra allows organizations to create, manage, and run secure elections with real-time results visualization.
 
 ## Features
 
-- *User Authentication*: Secure registration and login with email verification
-- *Role-based Access*: Admin and Voter roles with specific permissions
-- *Admin Dashboard*: Create and manage elections, candidates, and view results
-- *Voter Interface*: Participate in elections with an intuitive UI
-- *Security*: JWT authentication, encryption, and prevention of double voting
-- *Analytics*: Visualize election results and voter turnout
+- **User Authentication**: Secure login for administrators and voters
+- **Role-based Access**: Admin and Voter roles with specific permissions
+- **Admin Dashboard**: Create and manage elections, candidates, and voters
+- **Election Management**: Schedule elections with start/end dates and automatic status updates
+- **Voter Interface**: Intuitive interface for casting votes with confirmation
+- **Real-time Results**: Live results with data visualization using Recharts
+- **Security**: Prevention of double voting and data persistence
+- **MongoDB Integration**: Cloud-based data storage with MongoDB Atlas
 
 ## Tech Stack
 
 ### Frontend
-- React.js with hooks and functional components
-- Material-UI for UI components
-- Redux Toolkit for state management
+- React.js with TypeScript
+- Shadcn UI components
 - React Router for navigation
-- Chart.js for data visualization
+- Context API for state management
+- Recharts for data visualization
 
 ### Backend
-- Node.js & Express.js
-- MongoDB with Mongoose
+- Node.js & Express.js with TypeScript
+- MongoDB with Mongoose ODM
 - JWT for authentication
-- Bcrypt for password hashing
-- Express Validator for input validation
+- MongoDB Atlas for cloud database
+- RESTful API architecture
+
+## Project Structure
+
+```
+voting-app/
+├── src/                    # React frontend
+│   ├── components/         # Reusable UI components
+│   ├── contexts/           # React context providers
+│   ├── pages/              # Application pages
+│   ├── layouts/            # Layout components
+│   └── utils/              # Utility functions
+├── server/                 # Node.js backend
+│   ├── src/
+│   │   ├── api/            # API routes
+│   │   ├── middleware/     # Custom middleware
+│   │   ├── models/         # Mongoose models
+│   │   ├── services/       # Business logic
+│   │   ├── types/          # TypeScript types
+│   │   ├── config/         # Configuration
+│   │   └── utils/          # Utility functions
+│   └── server.ts           # Entry point
+└── README.md
+```
 
 ## Getting Started
 
 ### Prerequisites
-- Node.js (v14.0.0 or higher)
-- npm (v6.0.0 or higher)
-- MongoDB (local or Atlas URI)
+- Node.js (v18.0.0 or higher)
+- npm (v8.0.0 or higher)
+- MongoDB Atlas account (free tier is sufficient)
 
 ### Installation
 
-1. *Clone the repository*
-   
+1. **Clone the repository**
+   ```
    git clone <repository-url>
-   cd online-voting-system
-   
+   cd voting-app
+   ```
 
-2. *Setup environment variables*
-   - Create a .env file in the server directory
-   
-   MONGO_URI=your_mongodb_connection_string
+2. **Setup environment variables**
+   - Create a `.env` file in the server directory
+   ```
+   PORT=5002
+   NODE_ENV=development
    JWT_SECRET=your_jwt_secret
-   EMAIL_USER=your_email_for_sending_verification
-   EMAIL_PASS=your_email_password
-   
+   JWT_EXPIRES_IN=7d
+   MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/electra-voting?retryWrites=true&w=majority
+   ```
 
-3. *Install server dependencies*
-   
+3. **Install dependencies**
+   ```
+   npm install
    cd server
    npm install
-   
+   ```
 
-4. *Install client dependencies*
-   
-   cd ../client
-   npm install
-   
-
-5. *Run the application*
-   - For server (from the server directory):
-   
+4. **Run the application**
+   - For server:
+   ```
+   cd server
    npm run dev
+   ```
    
-   - For client (from the client directory):
+   - For client:
+   ```
+   npm run dev
+   ```
    
-   npm start
-   
+   Or use the concurrent script to run both:
+   ```
+   npm run dev:all
+   ```
 
-## Project Structure
+## MongoDB Atlas Integration
 
+The application now uses MongoDB Atlas for data persistence. To set up your own MongoDB connection:
 
-online-voting-system/
-├── client/                # React frontend
-├── server/                # Node.js backend
-│   ├── config/            # Configuration files
-│   ├── controllers/       # Request handlers
-│   ├── middleware/        # Custom middleware
-│   ├── models/            # Mongoose models
-│   ├── routes/            # API routes
-│   └── server.js          # Entry point
-└── README.md
+1. Create an account at [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
+2. Create a new cluster (free tier is sufficient)
+3. Create a database user with password
+4. Get your connection string and replace it in the `.env` file
+5. The application will automatically create the necessary collections
 
+## Data Models
+
+### Election
+- Title, description, start/end dates
+- Status (draft, upcoming, active, completed)
+- Candidates list with vote counts
+- Voters tracking
+- Results analytics
+
+### Voter
+- Name, email
+- Voting status
+- Election participation tracking
+- Access code for security
 
 ## License
 MIT
