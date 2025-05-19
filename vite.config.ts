@@ -8,6 +8,12 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    allowedHosts: [
+      'localhost',
+      '127.0.0.1',
+      '.csb.app', // Allow all CodeSandbox domains
+      '.codesandbox.io' // Allow all CodeSandbox domains
+    ]
   },
   plugins: [
     react(),
