@@ -356,7 +356,7 @@ const getDefaultContent = (type: NotificationType): string => {
  * Get email template for notification type
  * @param type Notification type
  */
-const getEmailTemplate = (type: NotificationType): string => {
+const getEmailTemplate = (_type: NotificationType): string => {
   // In a real implementation, fetch templates from database or files
   return `
     <!DOCTYPE html>
@@ -413,7 +413,7 @@ const renderEmailTemplate = (template: string, data: Record<string, any>): strin
   
   // Handle conditionals (very basic implementation)
   const conditionalRegex = /{{#if ([^}]+)}}([\s\S]*?){{\/if}}/g;
-  rendered = rendered.replace(conditionalRegex, (match, condition, content) => {
+  rendered = rendered.replace(conditionalRegex, (_match, condition, content) => {
     return data[condition] ? content : '';
   });
   

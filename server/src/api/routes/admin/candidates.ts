@@ -109,8 +109,10 @@ router.post('/:electionId/candidates', async (req: AuthenticatedRequest, res: Re
     
     // In a real implementation, save to database
     res.status(201).json(newCandidate);
+    return;
   } catch (error) {
     res.status(500).json({ message: 'Server error', error });
+    return;
   }
 });
 
@@ -145,8 +147,10 @@ router.put('/:electionId/candidates/:id', async (req: AuthenticatedRequest, res:
     
     // In a real implementation, update in database
     res.json(updatedCandidate);
+    return;
   } catch (error) {
     res.status(500).json({ message: 'Server error', error });
+    return;
   }
 });
 
@@ -191,8 +195,10 @@ router.post('/:electionId/candidates/reorder', async (req: AuthenticatedRequest,
       message: `Candidates for election ${electionId} reordered successfully`,
       order: candidateOrder
     });
+    return;
   } catch (error) {
     res.status(500).json({ message: 'Server error', error });
+    return;
   }
 });
 
@@ -233,8 +239,10 @@ router.post('/:electionId/candidates/bulk', async (req: AuthenticatedRequest, re
     
     // In a real implementation, bulk save to database
     res.status(201).json(createdCandidates);
+    return;
   } catch (error) {
     res.status(500).json({ message: 'Server error', error });
+    return;
   }
 });
 

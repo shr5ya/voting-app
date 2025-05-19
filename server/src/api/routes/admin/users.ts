@@ -20,9 +20,7 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
     const role = req.query.role as UserRole;
     const searchTerm = req.query.search as string;
     const isActive = req.query.isActive === 'true';
-    const sortBy = req.query.sortBy as string || 'createdAt';
-    const sortOrder = req.query.sortOrder as 'asc' | 'desc' || 'desc';
-
+    
     // Mock response
     const users = [
       {
@@ -153,8 +151,10 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
     
     // In a real implementation, save to database
     res.status(201).json(newUser);
+    return;
   } catch (error) {
     res.status(500).json({ message: 'Server error', error });
+    return;
   }
 });
 
@@ -265,7 +265,7 @@ router.post('/:id/reset-password', async (req: AuthenticatedRequest, res: Respon
  * @desc    Get user statistics
  * @access  Admin only
  */
-router.get('/stats/summary', async (req: AuthenticatedRequest, res: Response) => {
+router.get('/stats/summary', async (_req: AuthenticatedRequest, res: Response) => {
   try {
     // Mock response
     const stats = {

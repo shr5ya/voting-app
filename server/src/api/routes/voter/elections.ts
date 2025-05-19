@@ -13,7 +13,7 @@ router.use(authenticateUser);
  * @desc    Get all elections a voter is eligible for
  * @access  Voter only
  */
-router.get('/', async (req: AuthenticatedRequest, res: Response) => {
+router.get('/', async (_req: AuthenticatedRequest, res: Response) => {
   try {
     // In a real implementation, fetch from database based on voter ID
     // Mock response with eligible elections
@@ -155,8 +155,10 @@ router.post('/:id/vote', checkVoterEligibility, async (req: AuthenticatedRequest
         timestamp: new Date()
       }
     });
+    return;
   } catch (error) {
     res.status(500).json({ message: 'Server error', error });
+    return;
   }
 });
 
@@ -185,8 +187,10 @@ router.get('/:id/receipt', async (req: AuthenticatedRequest, res: Response) => {
     };
     
     res.json(receipt);
+    return;
   } catch (error) {
     res.status(500).json({ message: 'Server error', error });
+    return;
   }
 });
 
@@ -254,7 +258,7 @@ router.get('/:id/results', async (req: AuthenticatedRequest, res: Response) => {
  * @desc    Get voter's voting history
  * @access  Voter only
  */
-router.get('/history/votes', async (req: AuthenticatedRequest, res: Response) => {
+router.get('/history/votes', async (_req: AuthenticatedRequest, res: Response) => {
   try {
     // Mock response
     const history = [
@@ -287,7 +291,7 @@ router.get('/history/votes', async (req: AuthenticatedRequest, res: Response) =>
  * @desc    Get a count of elections the voter is eligible for
  * @access  Voter only
  */
-router.get('/status/eligible', async (req: AuthenticatedRequest, res: Response) => {
+router.get('/status/eligible', async (_req: AuthenticatedRequest, res: Response) => {
   try {
     // Mock response
     const stats = {

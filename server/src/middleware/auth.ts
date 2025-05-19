@@ -37,6 +37,7 @@ export const authenticateUser = (req: AuthenticatedRequest, res: Response, next:
     // Add user info to request object
     req.user = decoded;
     next();
+    return;
   } catch (error) {
     return res.status(401).json({ message: 'Invalid or expired token' });
   }
@@ -55,6 +56,7 @@ export const authorizeAdmin = (req: AuthenticatedRequest, res: Response, next: N
   }
 
   next();
+  return;
 };
 
 /**
@@ -74,4 +76,5 @@ export const checkVoterEligibility = (req: AuthenticatedRequest, res: Response, 
   // For now, we'll just pass the request to the next middleware
   
   next();
+  return;
 }; 

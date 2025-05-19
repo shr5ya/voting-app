@@ -21,11 +21,7 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
-    const status = req.query.status as ElectionStatus;
-    const searchTerm = req.query.search as string;
-    const sortBy = req.query.sortBy as string || 'createdAt';
-    const sortOrder = req.query.sortOrder as 'asc' | 'desc' || 'desc';
-
+    
     // Mock response
     const elections = [
       {
@@ -55,8 +51,10 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
         pages: Math.ceil(1 / limit)
       }
     });
+    return;
   } catch (error) {
     res.status(500).json({ message: 'Server error', error });
+    return;
   }
 });
 
@@ -135,8 +133,10 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
     
     // In a real implementation, save to database
     res.status(201).json(newElection);
+    return;
   } catch (error) {
     res.status(500).json({ message: 'Server error', error });
+    return;
   }
 });
 
@@ -232,8 +232,10 @@ router.post('/:id/status', async (req: AuthenticatedRequest, res: Response) => {
       message: `Election ${electionId} status updated to ${status}`,
       status
     });
+    return;
   } catch (error) {
     res.status(500).json({ message: 'Server error', error });
+    return;
   }
 });
 

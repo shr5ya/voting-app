@@ -12,7 +12,7 @@ router.use(authenticateUser, authorizeAdmin);
  * @desc    Get all system configuration settings
  * @access  Admin only
  */
-router.get('/', async (req: AuthenticatedRequest, res: Response) => {
+router.get('/', async (_req: AuthenticatedRequest, res: Response) => {
   try {
     // Mock response
     const config = {
@@ -208,8 +208,10 @@ router.put('/security', async (req: AuthenticatedRequest, res: Response) => {
       message: 'Security settings updated successfully',
       config: updatedConfig
     });
+    return;
   } catch (error) {
     res.status(500).json({ message: 'Server error', error });
+    return;
   }
 });
 
@@ -218,7 +220,7 @@ router.put('/security', async (req: AuthenticatedRequest, res: Response) => {
  * @desc    Reset configuration to default settings
  * @access  Admin only
  */
-router.post('/reset', async (req: AuthenticatedRequest, res: Response) => {
+router.post('/reset', async (_req: AuthenticatedRequest, res: Response) => {
   try {
     // Mock response - in a real implementation, this would reset to defaults
     res.json({
@@ -234,7 +236,7 @@ router.post('/reset', async (req: AuthenticatedRequest, res: Response) => {
  * @desc    Get email templates
  * @access  Admin only
  */
-router.get('/email-templates', async (req: AuthenticatedRequest, res: Response) => {
+router.get('/email-templates', async (_req: AuthenticatedRequest, res: Response) => {
   try {
     // Mock response
     const templates = [

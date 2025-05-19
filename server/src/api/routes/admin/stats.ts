@@ -13,7 +13,7 @@ router.use(authenticateUser, authorizeAdmin);
  * @desc    Get statistics for admin dashboard
  * @access  Admin only
  */
-router.get('/dashboard', async (req: AuthenticatedRequest, res: Response) => {
+router.get('/dashboard', async (_req: AuthenticatedRequest, res: Response) => {
   try {
     // Mock response
     const stats = {
@@ -88,7 +88,7 @@ router.get('/dashboard', async (req: AuthenticatedRequest, res: Response) => {
  * @desc    Get detailed statistics about elections
  * @access  Admin only
  */
-router.get('/elections', async (req: AuthenticatedRequest, res: Response) => {
+router.get('/elections', async (_req: AuthenticatedRequest, res: Response) => {
   try {
     // Mock response
     const stats = {
@@ -142,7 +142,7 @@ router.get('/elections', async (req: AuthenticatedRequest, res: Response) => {
  * @desc    Get detailed statistics about voters and participation
  * @access  Admin only
  */
-router.get('/voters', async (req: AuthenticatedRequest, res: Response) => {
+router.get('/voters', async (_req: AuthenticatedRequest, res: Response) => {
   try {
     // Mock response
     const stats = {
@@ -322,6 +322,7 @@ router.get('/export', async (req: AuthenticatedRequest, res: Response) => {
     }
   } catch (error) {
     res.status(500).json({ message: 'Server error', error });
+    return;
   }
 });
 
