@@ -1,105 +1,139 @@
-import fs from 'fs';
-import path from 'path';
-
-// File path for persistent storage
-const dataDir = path.join(__dirname, '../../../data');
-const electionsFilePath = path.join(dataDir, 'elections.json');
-
-// Ensure data directory exists
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
-}
-
-// In-memory store for elections
-let elections: any[] = [];
-
-// Load elections from file if it exists
-try {
-  if (fs.existsSync(electionsFilePath)) {
-    const data = fs.readFileSync(electionsFilePath, 'utf8');
-    const parsedElections = JSON.parse(data);
-    
-    // Convert string dates back to Date objects
-    elections = parsedElections.map((election: any) => ({
-      ...election,
-      startDate: new Date(election.startDate),
-      endDate: new Date(election.endDate),
-      createdAt: new Date(election.createdAt),
-      updatedAt: new Date(election.updatedAt)
-    }));
-    
-    console.log(`Loaded ${elections.length} elections from storage`);
-  } else {
-    // Create initial empty file
-    saveElections();
-    console.log('Created initial elections file');
-  }
-} catch (error) {
-  console.error('Error loading elections from file:', error);
-  // Continue with empty elections array
-}
-
-// Function to save elections to file
-function saveElections() {
-  try {
-    fs.writeFileSync(electionsFilePath, JSON.stringify(elections, null, 2));
-  } catch (error) {
-    console.error('Error saving elections to file:', error);
-  }
-}
+import Election, { IElection } from '../models/Election';
 
 /**
  * Get all elections
  */
-export const getElections = () => {
-  return [...elections];
+export const getElections = async (): Promise<IElection[]> => {
+  try {
+    return await Election.find();
+  } catch (error) {
+    console.error('Error fetching elections:', error);
+    return [];
+  }
 };
 
 /**
  * Get a specific election by ID
  */
-export const getElection = (id: string) => {
-  return elections.find(election => election.id === id);
+export const getElection = async (id: string): Promise<IElection | null> => {
+  try {
+    return await Election.findById(id);
+  } catch (error) {
+    console.error(`Error fetching election with id ${id}:`, error);
+    return null;
+  }
 };
 
 /**
  * Add a new election
  */
-export const addElection = (election: any) => {
-  elections.push(election);
-  saveElections(); // Save to file after adding
-  return election;
+export const addElection = async (election: any): Promise<IElection | null> => {
+  try {
+    const newElection = new Election(election);
+    return await newElection.save();
+  } catch (error) {
+    console.error('Error adding election:', error);
+    return null;
+  }
 };
 
 /**
  * Update an existing election
  */
-export const updateElection = (id: string, updates: any) => {
-  const index = elections.findIndex(election => election.id === id);
-  if (index === -1) return null;
-  
-  elections[index] = { ...elections[index], ...updates };
-  saveElections(); // Save to file after updating
-  return elections[index];
+export const updateElection = async (id: string, updates: any): Promise<IElection | null> => {
+  try {
+    return await Election.findByIdAndUpdate(
+      id, 
+      updates, 
+      { new: true, runValidators: true }
+    );
+  } catch (error) {
+    console.error(`Error updating election with id ${id}:`, error);
+    return null;
+  }
 };
 
 /**
  * Delete an election
  */
-export const deleteElection = (id: string) => {
-  const index = elections.findIndex(election => election.id === id);
-  if (index === -1) return false;
-  
-  elections.splice(index, 1);
-  saveElections(); // Save to file after deleting
-  return true;
+export const deleteElection = async (id: string): Promise<boolean> => {
+  try {
+    const result = await Election.findByIdAndDelete(id);
+    return !!result;
+  } catch (error) {
+    console.error(`Error deleting election with id ${id}:`, error);
+    return false;
+  }
 };
 
 /**
  * Clear all elections
  */
-export const clearElections = () => {
-  elections.length = 0;
-  saveElections(); // Save to file after clearing
-  return true;
+export const clearElections = async (): Promise<boolean> => {
+  try {
+    await Election.deleteMany({});
+    return true;
+  } catch (error) {
+    console.error('Error clearing elections:', error);
+    return false;
+  }
+};
+
+/**
+ * Update election statuses based on current date
+ */
+export const updateElectionStatuses = async (): Promise<void> => {
+  try {
+    const now = new Date();
+    
+    // Update upcoming elections to active
+    await Election.updateMany(
+      { status: 'upcoming', startDate: { $lte: now } },
+      { $set: { status: 'active' } }
+    );
+    
+    // Update active elections to completed
+    await Election.updateMany(
+      { status: 'active', endDate: { $lte: now } },
+      { $set: { status: 'completed' } }
+    );
+  } catch (error) {
+    console.error('Error updating election statuses:', error);
+  }
+};
+
+/**
+ * Get active elections
+ */
+export const getActiveElections = async (): Promise<IElection[]> => {
+  try {
+    return await Election.find({ status: 'active' });
+  } catch (error) {
+    console.error('Error fetching active elections:', error);
+    return [];
+  }
+};
+
+/**
+ * Get upcoming elections
+ */
+export const getUpcomingElections = async (): Promise<IElection[]> => {
+  try {
+    return await Election.find({ status: 'upcoming' });
+  } catch (error) {
+    console.error('Error fetching upcoming elections:', error);
+    return [];
+  }
+};
+
+/**
+ * Get completed elections
+ */
+export const getCompletedElections = async (): Promise<IElection[]> => {
+  try {
+    return await Election.find({ status: 'completed' });
+  } catch (error) {
+    console.error('Error fetching completed elections:', error);
+    return [];
+  }
 }; 

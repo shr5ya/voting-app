@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { getElections } from '../../../services';
+import { IElection } from '../../../models/Election';
 
 const router = Router();
 
@@ -35,21 +36,25 @@ const voters: Voter[] = [
 ];
 
 // Helper function to update voter status based on election data
-const syncVoterStatus = () => {
-  const elections = getElections();
-  
-  // Check each election's voters list and update the corresponding voter's hasVoted status
-  elections.forEach(election => {
-    if (election.voters && Array.isArray(election.voters)) {
-      election.voters.forEach((voterId: string) => {
-        const voterIndex = voters.findIndex(v => v.id === voterId);
-        if (voterIndex !== -1) {
-          voters[voterIndex].hasVoted = true;
-          voters[voterIndex].electionId = election.id;
-        }
-      });
-    }
-  });
+const syncVoterStatus = async (): Promise<void> => {
+  try {
+    const elections = await getElections();
+    
+    // Check each election's voters list and update the corresponding voter's hasVoted status
+    elections.forEach((election: IElection) => {
+      if (election.voters && Array.isArray(election.voters)) {
+        election.voters.forEach((voterId: string) => {
+          const voterIndex = voters.findIndex(v => v.id === voterId);
+          if (voterIndex !== -1) {
+            voters[voterIndex].hasVoted = true;
+            voters[voterIndex].electionId = election.id;
+          }
+        });
+      }
+    });
+  } catch (error) {
+    console.error('Error syncing voter status:', error);
+  }
 };
 
 /**
@@ -57,10 +62,14 @@ const syncVoterStatus = () => {
  * @desc    Get all voters
  * @access  Admin
  */
-router.get('/', (_req: Request, res: Response) => {
-  // Sync voter status with election data before returning
-  syncVoterStatus();
-  return res.json(voters);
+router.get('/', async (_req: Request, res: Response) => {
+  try {
+    // Sync voter status with election data before returning
+    await syncVoterStatus();
+    return res.json(voters);
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error', error });
+  }
 });
 
 /**
@@ -68,17 +77,21 @@ router.get('/', (_req: Request, res: Response) => {
  * @desc    Get voter by ID
  * @access  Admin
  */
-router.get('/:id', (req: Request, res: Response) => {
-  // Sync voter status with election data before returning
-  syncVoterStatus();
-  
-  const voter = voters.find(v => v.id === req.params.id);
-  
-  if (!voter) {
-    return res.status(404).json({ message: 'Voter not found' });
+router.get('/:id', async (req: Request, res: Response) => {
+  try {
+    // Sync voter status with election data before returning
+    await syncVoterStatus();
+    
+    const voter = voters.find(v => v.id === req.params.id);
+    
+    if (!voter) {
+      return res.status(404).json({ message: 'Voter not found' });
+    }
+    
+    return res.json(voter);
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error', error });
   }
-  
-  return res.json(voter);
 });
 
 /**

@@ -8,6 +8,7 @@ import { createServer } from 'http';
 import path from 'path';
 import apiRoutes from './api/routes';
 import notificationService from './services/notification';
+import connectDB from './config/database';
 
 // Load environment variables
 dotenv.config();
@@ -15,6 +16,11 @@ dotenv.config();
 // Initialize Express app
 const app = express();
 const PORT = process.env.PORT || 5002;
+
+// Connect to MongoDB
+connectDB()
+  .then(() => console.log('Database connection established'))
+  .catch(err => console.error('Could not connect to MongoDB:', err));
 
 // Security middleware
 app.use(helmet({

@@ -2,7 +2,8 @@ import { Router } from 'express';
 import { authenticateUser, checkVoterEligibility, AuthenticatedRequest } from '../../../middleware/auth';
 import { Response } from 'express';
 import { ElectionStatus } from '../../../types/election';
-import { getElections, updateElection } from '../../../services';
+import { getElections, updateElection, updateElectionStatuses } from '../../../services';
+import { IElection } from '../../../models/Election';
 
 const router = Router();
 
@@ -16,10 +17,13 @@ router.use(authenticateUser);
  */
 router.get('/', async (_req: AuthenticatedRequest, res: Response) => {
   try {
-    // Get all elections (now includes mock elections if enabled)
-    const allElections = getElections();
+    // Get all elections from the database
+    const elections = await getElections();
     
-    res.json(allElections);
+    // Update the election status based on current date
+    await updateElectionStatuses();
+    
+    res.json(elections);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error });
   }
@@ -91,8 +95,14 @@ router.post('/:id/vote', checkVoterEligibility, async (req: AuthenticatedRequest
       return res.status(400).json({ message: 'Candidate ID is required' });
     }
     
-    // Get the election from the service
-    const election = getElections().find(e => e.id === electionId);
+    // Ensure user ID is defined
+    if (!userId) {
+      return res.status(401).json({ message: 'User ID not found, please authenticate again' });
+    }
+    
+    // Get all elections and find the one matching the ID
+    const elections = await getElections();
+    const election = elections.find((e: IElection) => e.id === electionId);
     
     if (!election) {
       return res.status(404).json({ message: 'Election not found' });
@@ -129,13 +139,13 @@ router.post('/:id/vote', checkVoterEligibility, async (req: AuthenticatedRequest
     election.voters.push(userId);
     
     // Update the election
-    updateElection(electionId, {
+    await updateElection(electionId, {
       candidates: election.candidates,
       totalVotes: election.totalVotes,
       voters: election.voters
     });
     
-    // Mock response
+    // Return success response
     res.status(201).json({
       message: 'Vote cast successfully',
       vote: {
