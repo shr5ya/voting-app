@@ -514,22 +514,59 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Cast a vote
   const castVote = async (electionId: string, candidateId: string, voterId: string): Promise<boolean> => {
     try {
+      console.log('ElectionContext: Casting vote with params:', { electionId, candidateId, voterId });
+      
+      // Validate input parameters
+      if (!electionId || !candidateId) {
+        console.error('Missing required parameters for voting');
+        toast.error('Missing required information for voting');
+        return false;
+      }
+      
       // Call the API to cast a vote
-      await api.post(`/voter/elections/${electionId}/vote`, { candidateId });
+      const response = await api.post(`/voter/elections/${electionId}/vote`, { 
+        candidateId,
+        voterId // Include voterId in the request
+      });
+      
+      console.log('Vote API response:', response.data);
       
       // Refresh the elections to get the updated vote count
       await refreshElections();
       
-      // Mark the voter as having voted
-      setVoters(prev => prev.map(voter => 
-        voter.id === voterId ? { ...voter, hasVoted: true } : voter
-      ));
+      // Mark the voter as having voted if they exist in our voters list
+      if (voterId && !voterId.startsWith('temp-voter-')) {
+        setVoters(prev => prev.map(voter => 
+          voter.id === voterId ? { ...voter, hasVoted: true } : voter
+        ));
+      }
       
       toast.success('Vote cast successfully!');
       return true;
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error casting vote:', err);
-      toast.error('Failed to cast vote');
+      
+      // More detailed error messages based on error type
+      if (err.response) {
+        console.error('Error response:', err.response.data);
+        
+        // Handle specific error cases
+        if (err.response.status === 400) {
+          toast.error(err.response.data.message || 'Invalid vote request');
+        } else if (err.response.status === 401) {
+          toast.error('You are not authorized to vote');
+        } else if (err.response.status === 409) {
+          toast.error('You have already voted in this election');
+        } else {
+          toast.error('Failed to cast vote: ' + (err.response.data.message || 'Server error'));
+        }
+      } else if (err.request) {
+        // Network error
+        toast.error('Network error. Please check your connection and try again.');
+      } else {
+        toast.error('Failed to cast vote');
+      }
+      
       return false;
     }
   };
