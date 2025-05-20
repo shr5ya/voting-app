@@ -1,36 +1,145 @@
 [
   {
-    "id": "n4a2wj6",
-    "title": "Second Year CR Election 2025",
-    "description": "This election will decide the Class Representative for the 2nd Year B.Tech Computer Science batch. The CR will help in communication between faculty and students, coordinate academic events, and address class concerns.",
-    "startDate": "2023-05-20T00:00:00.000Z",
-    "endDate": "2025-05-25T00:00:00.000Z",
+    "_id": "682c176e47066150d16d9f5a",
+    "title": "CR",
+    "description": "CR",
+    "startDate": "2025-05-20T00:00:00.000Z",
+    "endDate": "2025-05-21T00:00:00.000Z",
+    "status": "active",
     "candidates": [
       {
-        "name": "Mehul Saini",
-        "position": "Class Representative",
-        "bio": "I'm always ready to help my classmates and ensure that every student's voice is heard. Let's make our class united and productive!",
-        "imageUrl": "https://randomuser.me/api/portraits/men/12.jpg",
-        "id": "b94ea7k",
-        "votes": 3
-      },
-      {
-        "name": "Riya Gupta",
-        "position": "Class Representative",
-        "bio": "A dedicated student with strong communication skills and leadership experience. I promise to bridge the gap between students and faculty.",
-        "imageUrl": "https://randomuser.me/api/portraits/women/23.jpg",
-        "id": "x5qdyem",
-        "votes": 0
+        "name": "Kanav",
+        "position": "CR",
+        "bio": "Smart",
+        "imageUrl": "",
+        "votes": 0,
+        "_id": "682c176e47066150d16d9f5b"
       }
     ],
+    "totalVotes": 0,
     "voterCount": 0,
-    "status": "active",
+    "voters": [],
     "createdBy": "admin-user-id",
-    "createdAt": "2023-05-19T20:27:01.414Z",
-    "updatedAt": "2023-05-19T20:27:01.414Z",
-    "totalVotes": 3,
-    "voters": [
-      "admin-user-id"
-    ]
+    "isPublic": true,
+    "resultsPublished": false,
+    "createdAt": "2025-05-20T05:47:26.353Z",
+    "updatedAt": "2025-05-20T05:47:26.353Z",
+    "__v": 0
+  },
+  {
+    "_id": "682c192df883a92e2600d28d",
+    "title": "ABC",
+    "description": "ABC",
+    "startDate": "2025-05-20T00:00:00.000Z",
+    "endDate": "2025-05-21T00:00:00.000Z",
+    "status": "active",
+    "candidates": [
+      {
+        "name": "Kanav",
+        "position": "ABC",
+        "bio": "ABC",
+        "imageUrl": "",
+        "votes": 0,
+        "_id": "682c192df883a92e2600d28e"
+      }
+    ],
+    "totalVotes": 0,
+    "voterCount": 0,
+    "voters": [],
+    "createdBy": "admin-user-id",
+    "isPublic": true,
+    "resultsPublished": false,
+    "createdAt": "2025-05-20T05:54:53.848Z",
+    "updatedAt": "2025-05-20T05:54:53.848Z",
+    "__v": 0
+  },
+  {
+    "_id": "682c1b2ef4e16f8c262752d8",
+    "title": "CR",
+    "description": "CR",
+    "startDate": "2025-05-20T00:00:00.000Z",
+    "endDate": "2025-05-21T00:00:00.000Z",
+    "status": "active",
+    "candidates": [
+      {
+        "name": "CR",
+        "position": "ABC",
+        "bio": "ABC",
+        "imageUrl": "",
+        "votes": 0,
+        "_id": "682c1b2ef4e16f8c262752d9"
+      }
+    ],
+    "totalVotes": 0,
+    "voterCount": 0,
+    "voters": [],
+    "createdBy": "admin-user-id",
+    "isPublic": true,
+    "resultsPublished": false,
+    "createdAt": "2025-05-20T06:03:26.192Z",
+    "updatedAt": "2025-05-20T06:03:26.192Z",
+    "__v": 0
+  },
+  {
+    "_id": "682c1da74f40fcac91d0882f",
+    "title": "Second Year CR Election 2025",
+    "description": "This election will decide the Class Representative for the 2nd Year B.Tech Computer Science batch. The CR will help in communication between faculty and students, coordinate academic events, and address class concerns.",
+    "startDate": "2025-05-20T00:00:00.000Z",
+    "endDate": "2025-05-21T00:00:00.000Z",
+    "status": "active",
+    "candidates": [
+      {
+        "name": "Kanav Kumar",
+        "position": "CR",
+        "bio": "I’m always ready to help my classmates and ensure that every student’s voice is heard. Let’s make our class united and productive!",
+        "imageUrl": "",
+        "votes": 0,
+        "_id": "682c1da74f40fcac91d08830"
+      }
+    ],
+    "totalVotes": 0,
+    "voterCount": 0,
+    "voters": [],
+    "createdBy": "admin-user-id",
+    "isPublic": true,
+    "resultsPublished": false,
+    "createdAt": "2025-05-20T06:13:59.123Z",
+    "updatedAt": "2025-05-20T06:13:59.123Z",
+    "__v": 0
+  },
+  {
+    "_id": "682c26390fd7a93d2ed44e25",
+    "title": "Cultural Committee Head Election 2025",
+    "description": "This election is being held to select the Cultural Committee Head for the 2025 academic year. The elected student will be responsible for organizing cultural events, festivals, and talent showcases across the department and university level.",
+    "startDate": "2025-05-20T00:00:00.000Z",
+    "endDate": "2025-05-25T00:00:00.000Z",
+    "status": "active",
+    "candidates": [
+      {
+        "name": "Tanvi Kapoor",
+        "position": "Cultural Committee Head",
+        "bio": "Passionate about dance, theatre, and event planning. I’ve led multiple college fests and promise to bring more energy and creativity to our campus.",
+        "imageUrl": "https://randomuser.me/api/portraits/women/34.jpg",
+        "votes": 0,
+        "_id": "682c26390fd7a93d2ed44e26"
+      },
+      {
+        "name": "Aarav Thakur",
+        "position": "Cultural Committee Head",
+        "bio": "Known for my organizing skills and creativity. Let’s make our cultural calendar vibrant and inclusive for everyone!",
+        "imageUrl": "https://randomuser.me/api/portraits/men/27.jpg",
+        "votes": 0,
+        "_id": "682c26390fd7a93d2ed44e27"
+      }
+    ],
+    "totalVotes": 0,
+    "voterCount": 0,
+    "voters": [],
+    "createdBy": "admin-user-id",
+    "isPublic": true,
+    "resultsPublished": false,
+    "createdAt": "2025-05-20T06:50:33.228Z",
+    "updatedAt": "2025-05-20T06:50:33.228Z",
+    "__v": 0
   }
 ]

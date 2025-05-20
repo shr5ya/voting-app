@@ -12,13 +12,13 @@ const Settings: React.FC = () => {
   const { user } = useAuth();
   const { theme, setTheme } = useTheme();
   const [isUpdating, setIsUpdating] = useState(false);
-  
+
   const handleThemeToggle = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
     toast.success(`Theme changed to ${newTheme} mode`);
   };
-  
+
   return (
     <Layout>
       <div className="container mx-auto py-8 px-4">
@@ -35,47 +35,47 @@ const Settings: React.FC = () => {
               <CardTitle>Appearance</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
+                    <div className="flex items-center justify-between">
+                      <div>
                   <p className="font-medium">Dark Mode</p>
                   <p className="text-sm text-muted-foreground">Toggle between light and dark themes</p>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Sun className="h-5 w-5 text-muted-foreground" />
-                  <Switch 
+                      <Switch 
                     checked={theme === 'dark'} 
                     onCheckedChange={handleThemeToggle}
                   />
                   <Moon className="h-5 w-5 text-muted-foreground" />
                 </div>
               </div>
-            </CardContent>
-          </Card>
+                  </CardContent>
+                </Card>
           
           <Card>
             <CardHeader>
               <CardTitle>Account Information</CardTitle>
-            </CardHeader>
-            <CardContent>
+                  </CardHeader>
+                  <CardContent>
               <div className="space-y-2">
                 <p><strong>Name:</strong> {user?.name || 'Not logged in'}</p>
                 <p><strong>Email:</strong> {user?.email || 'Not logged in'}</p>
                 <p><strong>Role:</strong> {user?.role || 'Not logged in'}</p>
               </div>
-            </CardContent>
-          </Card>
+                  </CardContent>
+                </Card>
           
           <Card>
             <CardHeader>
               <CardTitle>About</CardTitle>
-            </CardHeader>
-            <CardContent>
+                  </CardHeader>
+                  <CardContent>
               <p className="text-muted-foreground">Electra Voting App v1.0.0</p>
               <p className="text-muted-foreground">© 2024 Electra. All rights reserved.</p>
-            </CardContent>
-          </Card>
+                  </CardContent>
+                </Card>
         </div>
-      </div>
+            </div>
     </Layout>
   );
 };

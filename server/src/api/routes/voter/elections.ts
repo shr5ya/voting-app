@@ -87,29 +87,39 @@ router.get('/:id', async (req: AuthenticatedRequest, res: Response) => {
 router.post('/:id/vote', checkVoterEligibility, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const electionId = req.params.id;
-    const { candidateId } = req.body;
-    const userId = req.user?.id;
+    const { candidateId, voterId } = req.body;
+    const userId = req.user?.id || voterId; // Use provided voterId as fallback
+    
+    console.log(`Attempting to cast vote: electionId=${electionId}, candidateId=${candidateId}, userId=${userId}`);
     
     // Validate required fields
     if (!candidateId) {
+      console.log('Vote rejected: Missing candidateId');
       return res.status(400).json({ message: 'Candidate ID is required' });
     }
     
     // Ensure user ID is defined
     if (!userId) {
+      console.log('Vote rejected: Missing userId');
       return res.status(401).json({ message: 'User ID not found, please authenticate again' });
     }
     
     // Get all elections and find the one matching the ID
     const elections = await getElections();
-    const election = elections.find((e: IElection) => e.id === electionId);
+    
+    // First try to find by direct ID match
+    let election = elections.find((e: IElection) => e.id === electionId || e._id?.toString() === electionId);
     
     if (!election) {
+      console.log(`Election not found with ID: ${electionId}`);
       return res.status(404).json({ message: 'Election not found' });
     }
     
+    console.log(`Found election: ${election.title} (${election.id || election._id})`);
+    
     // Check if election is active
     if (election.status !== ElectionStatus.ACTIVE) {
+      console.log(`Vote rejected: Election status is ${election.status}, not ACTIVE`);
       return res.status(400).json({ message: `Cannot vote in an election with status: ${election.status}` });
     }
     
@@ -120,30 +130,55 @@ router.post('/:id/vote', checkVoterEligibility, async (req: AuthenticatedRequest
     
     // Check if user has already voted
     if (election.voters.includes(userId)) {
+      console.log(`Vote rejected: User ${userId} has already voted`);
       return res.status(400).json({ message: 'You have already voted in this election' });
     }
     
     // Find the candidate
-    const candidateIndex = election.candidates.findIndex((c: any) => c.id === candidateId);
+    const candidateIndex = election.candidates.findIndex((c: any) => 
+      c.id === candidateId || c._id?.toString() === candidateId
+    );
+    
     if (candidateIndex === -1) {
+      console.log(`Vote rejected: Candidate ${candidateId} not found in election`);
       return res.status(404).json({ message: 'Candidate not found in this election' });
     }
     
+    console.log(`Found candidate: ${election.candidates[candidateIndex].name}`);
+    
     // Increment the candidate's vote count
+    if (!election.candidates[candidateIndex].votes) {
+      election.candidates[candidateIndex].votes = 0;
+    }
     election.candidates[candidateIndex].votes += 1;
     
     // Increment the total votes for the election
+    if (!election.totalVotes) {
+      election.totalVotes = 0;
+    }
     election.totalVotes += 1;
     
     // Add user to the list of voters for this election
     election.voters.push(userId);
     
+    console.log(`Updating election with new vote data`);
+    
     // Update the election
-    await updateElection(electionId, {
-      candidates: election.candidates,
-      totalVotes: election.totalVotes,
-      voters: election.voters
-    });
+    const updatedElection = await updateElection(
+      election.id || election._id?.toString() || electionId,
+      {
+        candidates: election.candidates,
+        totalVotes: election.totalVotes,
+        voters: election.voters
+      }
+    );
+    
+    if (!updatedElection) {
+      console.log('Failed to update election with vote data');
+      return res.status(500).json({ message: 'Failed to record vote' });
+    }
+    
+    console.log('Vote recorded successfully');
     
     // Return success response
     res.status(201).json({
@@ -156,7 +191,8 @@ router.post('/:id/vote', checkVoterEligibility, async (req: AuthenticatedRequest
     });
     return;
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error });
+    console.error('Error casting vote:', error);
+    res.status(500).json({ message: 'Server error', error: error instanceof Error ? error.message : 'Unknown error' });
     return;
   }
 });
